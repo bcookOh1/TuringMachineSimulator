@@ -10,9 +10,13 @@
 
 
 #include "TuringMachine.h"
+#include <boost/filesystem.hpp>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <map>
+#include <set>
 
 
 // constructor 
@@ -307,12 +311,11 @@ int TuringMachine::TransitionStep() {
          // all right moves are valid, 
          // in standard left of first B is invalid  
          // in two-way left of '#' is invalid, as defined by Sudkamp page 265 
-         int result = 0;
          if(direction == TAPE_RIGHT_SYMBOL) {
-            result = MoveHeadRight();
+            int result = MoveHeadRight();
          }
          else {
-            result = MoveHeadLeft();
+            int result = result = MoveHeadLeft();
             if(-1 == result) {
                _status = TmStatus::InvalidLeftMove;
             } // end if 
@@ -516,5 +519,82 @@ bool TuringMachine::GetNextTapePosition(TapeData &tapeData){
 
    return ret;
 } // end GetNext
+
+
+// bcook 12-08-2021
+int TuringMachine::WriteGraphvizDotFile(std::string fname) {
+
+   using namespace boost::filesystem;
+   using namespace std;
+   using std::begin;
+   using std::end;
+
+   int ret = 0;
+
+   std::set<string> stateList;
+   map<string, string> stateToStateTransition;
+
+   // TmTransitionTable::iterator tableIter;
+   for(auto tableIter = _transitionTable.begin(); tableIter != _transitionTable.end(); ++tableIter) {
+      for(auto rowIter = tableIter->second.begin(); rowIter != tableIter->second.end(); ++rowIter) {
+
+         string fromState = tableIter->first;
+         string toState = rowIter->second.GetState();
+         string readSymbol = rowIter->first;
+         string writeSymbol = rowIter->second.GetSymbol();
+         string direction = rowIter->second.GetDirection();
+
+         // add both from and to states, duplicates ignored
+         stateList.insert({ fromState });
+         stateList.insert({ toState });
+
+         string stateToState = fromState + " -> " + toState;
+         string transition = readSymbol + "/" + writeSymbol + " " + direction;
+         auto found = stateToStateTransition.find(stateToState);
+         if(found != stateToStateTransition.end()) {
+            found->second += "\\n" + transition;
+         }
+         else {
+            stateToStateTransition.emplace(make_pair(stateToState, transition));
+         } // end if 
+
+      } // end for
+   } // end for 
+
+
+   // create a graphviz dot file folder
+   path graphviz_folder{"gv_files"};
+   try {
+      create_directory(absolute(graphviz_folder));
+   }
+   catch(filesystem_error &e) {
+      std::cerr << e.what() << '\n';
+      return -1;
+   } // end try/catch
+
+   // make a graphviz file name
+   path fullpath = current_path();
+   fullpath /= graphviz_folder;
+   fullpath /= string(fname + ".gv");
+
+   // open the file and overwrite if already exists 
+   std::ofstream outfile;
+   outfile.open(fullpath.c_str(), std::ofstream::trunc);
+   if(outfile.fail()) {
+      return -2;
+   } // end if 
+
+   outfile << "digraph { \n // dot -Tsvg addition.gv -o addition.svg \n   rankdir = LR" << endl;
+
+   for_each(begin(stateList), end(stateList), [&](string item) {outfile << "   " << item << "[color = \"#000003\"];" << endl; });
+   for_each(begin(stateToStateTransition), end(stateToStateTransition), [&](auto const &mpair) {
+      outfile << "   " << mpair.first << " [label=\"" << mpair.second << "\"]; "<< endl; }
+   );
+
+   outfile << "}" << endl;
+   outfile.close();
+
+   return ret;
+} // end WriteGraphvizDotFile
 
 

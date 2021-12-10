@@ -11,6 +11,7 @@
 
 
 Transition::Transition() {
+   _index = 0;
 } // end ctor 
 
 

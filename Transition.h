@@ -15,6 +15,9 @@
 #pragma once
 
 #include <string>
+#include <iostream>
+#include <sstream>
+
 
 class Transition {
 private:
@@ -45,6 +48,13 @@ public:
    std::string GetSymbol() {return _symbol;}
    std::string GetDirection() {return _stepDirection;}
    int GetIndex() { return _index; }
+
+   // bcook 12-7-2021 debug function 
+   std::string toStr() {
+      std::ostringstream oss;
+      oss << "state: "<< _state << ", symbol: " << _symbol << ", step dir: " << _stepDirection << ", index: " << _index;
+      return oss.str();
+   } // end toStr
 
 }; // end class 
 

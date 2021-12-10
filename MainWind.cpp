@@ -157,6 +157,10 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
       std::string fname(chooser.value(0));
       GetFilenameFromPath(fname);
       static_cast<MainWind*>(param)->_partialfname = fname;
+
+      // bcook 12-08-2021
+      static_cast<MainWind *>(param)->_tm->WriteGraphvizDotFile(fname);
+
    } // end if 
 
    return;
@@ -528,7 +532,7 @@ void MainWind::TmFactory() {
 
    _validFile = false;
 
-   // delete the old _tm if it exists  print _tm
+   // delete the old _tm if it exists  
    if(_tm != nullptr){
       delete _tm;
       _tm = nullptr;

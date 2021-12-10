@@ -120,6 +120,9 @@ public:
    bool GetFirstTapePosition(TapeData &tapeData);
    bool GetNextTapePosition(TapeData &tapeData);
 
+   // make a graphviz doc file 
+   int WriteGraphvizDotFile(std::string fname);
+
 }; // end TuringMachine
 
 

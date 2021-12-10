@@ -94,7 +94,7 @@ typedef std::list<TapeData> TapeList;
 typedef std::list<TapeData>::iterator TapeIter;
 
 //                   state        symbol       direction
-typedef std::tuple<std::string, std::string, std::string> TransitionData;
+// typedef std::tuple<std::string, std::string, std::string> TransitionData;
 
 // used for the gui rate dropbox 
 typedef std::unordered_map<std::string, float> RateMap;
