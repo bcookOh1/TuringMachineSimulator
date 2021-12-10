@@ -1,5 +1,6 @@
 bin/*.*
 tms.exe
-.vscode/tasks.json
-.vscode/launch.json
-.vscode/c_cpp_properties.json
+.vscode/*.*
+TuringMachineSimulator.code-workspace
+*.gv
+*.svg
