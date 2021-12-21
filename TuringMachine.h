@@ -121,7 +121,7 @@ public:
    bool GetNextTapePosition(TapeData &tapeData);
 
    // make a graphviz doc file 
-   int WriteGraphvizDotFile(std::string fname);
+   int WriteGraphvizDotFile(std::string tmFilename, std::string &gvFullPath);
 
 }; // end TuringMachine
 

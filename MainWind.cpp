@@ -122,14 +122,17 @@ void MainWind::SetupControls(int w, int h) {
 // file and then call the TmFactory() to create a _tm object 
 void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
 
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
    std::string desktop = GetDesktopPath();
 
    // hide the status box 
-   static_cast<MainWind*>(param)->SetRunStatusBox(RunState::Off);
+   mainwind->SetRunStatusBox(RunState::Off);
 
    Fl_File_Chooser chooser(desktop.c_str(), "*.tm", 
                            Fl_File_Chooser::SINGLE, "Turing Machine");
-   chooser.directory(desktop.c_str());
+   chooser.directory("D:/TmSim_solution/TuringMachineSimulator/tms" /*desktop.c_str()*/);
 
    chooser.show();
 
@@ -139,27 +142,26 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
    // if user selected a file clear th internal status an setup the tm 
    if(chooser.value() != NULL) {
 
-      static_cast<MainWind*>(param)->_validFile = false;
+      mainwind->_validFile = false;
 
       // clear the input string 
-      static_cast<MainWind*>(param)->_validInputString = false;
-      static_cast<MainWind*>(param)->_inString->value("");
-      static_cast<MainWind*>(param)->_inString->color(FL_BACKGROUND2_COLOR);
+      mainwind->_validInputString = false;
+      mainwind->_inString->value("");
+      mainwind->_inString->color(FL_BACKGROUND2_COLOR);
 
-      static_cast<MainWind*>(param)->SetDefinitionfile(chooser.value(0));
-      static_cast<MainWind*>(param)->TmFactory();
-      static_cast<MainWind*>(param)->_grpTuringTape->SetConfiguration(
-                             static_cast<MainWind*>(param)->_tm->GetConfigurationType());
+      mainwind->SetDefinitionfile(chooser.value(0));
+      mainwind->TmFactory();
+      mainwind->_grpTuringTape->SetConfiguration(mainwind->_tm->GetConfigurationType());
 
-      static_cast<MainWind*>(param)->SetControlEnables();
+      mainwind->SetControlEnables();
 
       // use _partialfname for writing the computation file  
       std::string fname(chooser.value(0));
       GetFilenameFromPath(fname);
-      static_cast<MainWind*>(param)->_partialfname = fname;
+      mainwind->_partialfname = fname;
 
       // bcook 12-08-2021
-      static_cast<MainWind *>(param)->_tm->WriteGraphvizDotFile(fname);
+      mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
 
    } // end if 
 
@@ -171,45 +173,44 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
 // setup and then it starts the sequncer timer 
 void MainWind::RunButtonCB(Fl_Widget *widget, void *param) {
 
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
    // if btn value is 1 start the timer else stop the time 
    if(static_cast<Fl_Button*>(widget)->value() == 1) {
 
       // if the TM is not initialized like after a run then initialize
-      if(static_cast<MainWind*>(param)->_tm->GetTmStatus() != TmStatus::Initialized) {
-         static_cast<MainWind*>(param)->_tm->Initialize();
-         static_cast<MainWind*>(param)->_grpTuringTape->SetTapeToB();
-         static_cast<MainWind*>(param)->SetupGUITape(
-                              static_cast<MainWind*>(param)->_tm->GetConfigurationType());
+      if(mainwind->_tm->GetTmStatus() != TmStatus::Initialized) {
+         mainwind->_tm->Initialize();
+         mainwind->_grpTuringTape->SetTapeToB();
+         mainwind->SetupGUITape(mainwind->_tm->GetConfigurationType());
       } // end if 
       
       // get the run rate from the dropbox 
-      static_cast<MainWind*>(param)->_runRate = 
-                 static_cast<MainWind*>(param)->GetSequencerRunRate();
+      mainwind->_runRate = mainwind->GetSequencerRunRate();
       
       // set status and start the timer 
-      static_cast<MainWind*>(param)->_running = true;
-      static_cast<MainWind*>(param)->_bwrComputation->clear();
-      static_cast<MainWind*>(param)->SetRunStatusBox(RunState::Running);
-      static_cast<MainWind*>(param)->_outStatus->value(RunStateText[
-                                     static_cast<int>(RunState::Running)].c_str());
+      mainwind->_running = true;
+      mainwind->_bwrComputation->clear();
+      mainwind->SetRunStatusBox(RunState::Running);
+      mainwind->_outStatus->value(RunStateText[static_cast<int>(RunState::Running)].c_str());
 
       // add the definition to the computation
       StringVector definition = static_cast<MainWind*>(param)->_tm->GetDefinition();
       std::for_each(definition.begin(), definition.end(), [&](std::string s) {
-         static_cast<MainWind*>(param)->_bwrComputation->add(s.c_str());
+         mainwind->_bwrComputation->add(s.c_str());
       }); // end of lambda 
 
-      Fl::add_timeout(static_cast<MainWind*>(param)->_runRate, RunTimerCB, param);
+      Fl::add_timeout(mainwind->_runRate, RunTimerCB, param);
    } 
    else {
-      static_cast<MainWind*>(param)->_running = false;
-      static_cast<MainWind*>(param)->SetRunStatusBox(RunState::Canceled);
-      static_cast<MainWind*>(param)->_outStatus->value(RunStateText[
-                                     static_cast<int>(RunState::Canceled)].c_str());
+      mainwind->_running = false;
+      mainwind->SetRunStatusBox(RunState::Canceled);
+      mainwind->_outStatus->value(RunStateText[static_cast<int>(RunState::Canceled)].c_str());
       Fl::remove_timeout(RunTimerCB, param);
    } // end if 
 
-   static_cast<MainWind*>(param)->SetControlEnables();
+   mainwind->SetControlEnables();
 
    return;
 } // end RunButtonCB
@@ -221,6 +222,9 @@ void MainWind::RunButtonCB(Fl_Widget *widget, void *param) {
 // a filename that looks like this "computation_<definition_filename>.txt" 
 void MainWind::ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param) {
 
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
    // setup the file chooser to save the computation text  
    std::string desktop = GetDesktopPath();
 
@@ -230,8 +234,7 @@ void MainWind::ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param) {
    chooser.directory(desktop.c_str());
 
    std::string fullPath = desktop + "\\" + COMPUTATION_FILE_NAME;
-   fullPath = ReplaceSubstring(fullPath, PLACEHOLDER, 
-                               static_cast<MainWind*>(param)->_partialfname);
+   fullPath = ReplaceSubstring(fullPath, PLACEHOLDER, mainwind->_partialfname);
    chooser.value(fullPath.c_str());
 
    chooser.show();
@@ -241,7 +244,7 @@ void MainWind::ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param) {
 
    if(chooser.value() != NULL) {
       std::string fname(chooser.value());
-      static_cast<MainWind*>(param)->WriteComputationToFile(fname);
+      mainwind->WriteComputationToFile(fname);
    } // end if 
 
    return;
@@ -253,24 +256,26 @@ void MainWind::ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param) {
 // then calls SetupGUITape() to set up the GUI
 void MainWind::UserInputStringCB(Fl_Widget *widget, void *param) {
 
-   if(static_cast<MainWind*>(param)->_validFile == true) {
-      int ret = static_cast<MainWind*>(param)->TestInputString();
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
+   if(mainwind->_validFile == true) {
+      int ret = mainwind->TestInputString();
       if(ret == 0) {
-         static_cast<MainWind*>(param)->_validInputString = true;
-         static_cast<MainWind*>(param)->SetInputStringInTM();
+         mainwind->_validInputString = true;
+         mainwind->SetInputStringInTM();
 
          // initialize _tm with the input string 
-         static_cast<MainWind*>(param)->_tm->Initialize();
-         static_cast<MainWind*>(param)->_grpTuringTape->SetTapeToB();
-         static_cast<MainWind*>(param)->SetupGUITape(static_cast<MainWind*>(param)->
-                                       _tm->GetConfigurationType());
+         mainwind->_tm->Initialize();
+         mainwind->_grpTuringTape->SetTapeToB();
+         mainwind->SetupGUITape(mainwind->_tm->GetConfigurationType());
 
       }
       else {
-         static_cast<MainWind*>(param)->_validInputString = false;
+         mainwind->_validInputString = false;
       } // end if 
 
-      static_cast<MainWind*>(param)->SetControlEnables();
+      mainwind->SetControlEnables();
 
    } // end if  
 
@@ -319,6 +324,10 @@ int MainWind::SetInputStringInTM() {
 // this is the sequencer for the TM, it calls _tm->TransitionStep()
 // and then looks at the tm status to decide how to continue or stop 
 void MainWind::RunTimerCB(void *data) {
+
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(data);
+
    TmStatus status = TmStatus::InProgress;
 
    Transition transition;
@@ -333,75 +342,75 @@ void MainWind::RunTimerCB(void *data) {
    // TmStatus::RejectedNotOnFinalState, if there are final states
    // TmStatus::Abnormal_Termination, two - way left on #
    // TmStatus::SomethingWentWrong, should not happen, but ?
-   int ret = static_cast<MainWind*>(data)->_tm->TransitionStep();
-   status = static_cast<MainWind*>(data)->_tm->GetTmStatus();
+   int ret = mainwind->_tm->TransitionStep();
+   status = mainwind->_tm->GetTmStatus();
    if(0 == ret){
 
-      transition = static_cast<MainWind*>(data)->_tm->GetCurrentTransition();
+      transition = mainwind->_tm->GetCurrentTransition();
 
       switch(status) {
 
       case TmStatus::InProgress:
 
-         static_cast<MainWind*>(data)->SetTapeSymbolAndMoveTheHead(transition);
+         mainwind->SetTapeSymbolAndMoveTheHead(transition);
 
          // update the browser list 
-         computation = static_cast<MainWind*>(data)->_tm->GetComputation();
-         static_cast<MainWind*>(data)->_bwrComputation->add(computation.c_str());
+         computation = mainwind->_tm->GetComputation();
+         mainwind->_bwrComputation->add(computation.c_str());
 
          // restart the timer 
-         Fl::repeat_timeout(static_cast<MainWind*>(data)->_runRate, RunTimerCB, data);
+         Fl::repeat_timeout(mainwind->_runRate, RunTimerCB, data);
       
          break;
 
       // complete on empty transition but no final states in tm 
       case TmStatus::CompleteOnEmptyTransition:
 
-         static_cast<MainWind*>(data)->_btnRun->value(0);
-         RunButtonCB(static_cast<MainWind*>(data)->_btnRun, data);
+         mainwind->_btnRun->value(0);
+         RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
-         static_cast<MainWind*>(data)->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
                                        RunState::CompleteOnEmptyTransition)].c_str());
-         static_cast<MainWind*>(data)->SetStatus(RunState::CompleteOnEmptyTransition);
+         mainwind->SetStatus(RunState::CompleteOnEmptyTransition);
 
          break;
 
       // only if there are final states 
       case TmStatus::AcceptedOnFinalState:
 
-         static_cast<MainWind*>(data)->_btnRun->value(0);
-         RunButtonCB(static_cast<MainWind*>(data)->_btnRun, data);
+         mainwind->_btnRun->value(0);
+         RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
-         static_cast<MainWind*>(data)->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
                                        RunState::AcceptedOnFinalState)].c_str());
-         static_cast<MainWind*>(data)->SetStatus(RunState::AcceptedOnFinalState);
+         mainwind->SetStatus(RunState::AcceptedOnFinalState);
 
          break;
 
       case TmStatus::RejectedNotOnFinalState:
 
-         static_cast<MainWind*>(data)->_btnRun->value(0);
-         RunButtonCB(static_cast<MainWind*>(data)->_btnRun, data);
+         mainwind->_btnRun->value(0);
+         RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
-         static_cast<MainWind*>(data)->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
                                        RunState::RejectedNotOnFinalState)].c_str());
-         static_cast<MainWind*>(data)->SetStatus(RunState::RejectedNotOnFinalState);
+         mainwind->SetStatus(RunState::RejectedNotOnFinalState);
 
          break;
 
       // only if two_way and left on #
       case TmStatus::InvalidLeftMove:
 
-         static_cast<MainWind*>(data)->_btnRun->value(0);
-         RunButtonCB(static_cast<MainWind*>(data)->_btnRun, data);
+         mainwind->_btnRun->value(0);
+         RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
-         static_cast<MainWind*>(data)->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
                                       RunState::InvalidLeftMove)].c_str());
-         static_cast<MainWind*>(data)->SetStatus(RunState::InvalidLeftMove);
+         mainwind->SetStatus(RunState::InvalidLeftMove);
 
          break;
 
@@ -413,9 +422,9 @@ void MainWind::RunTimerCB(void *data) {
    }
    else {
 
-      static_cast<MainWind*>(data)->_btnRun->value(0);
-      RunButtonCB(static_cast<MainWind*>(data)->_btnRun, data);
-      static_cast<MainWind*>(data)->SetStatus(RunState::SomethingWentWrong);
+      mainwind->_btnRun->value(0);
+      RunButtonCB(mainwind->_btnRun, data);
+      mainwind->SetStatus(RunState::SomethingWentWrong);
 
    } // end if 
 
@@ -437,7 +446,8 @@ int MainWind::SetTapeSymbolAndMoveTheHead(Transition transition) {
 
    int leftIndexValue = _grpTuringTape->GetLeftIndexValue();
 
-   _grpTuringTape->SetSymbolAt(transition.GetIndex() - leftIndexValue, transition.GetSymbol());
+   _grpTuringTape->SetSymbolAt(transition.GetIndex() - leftIndexValue, 
+                               transition.GetSymbol());
 
    if(transition.GetDirection() == TAPE_RIGHT_SYMBOL)
       ret = _grpTuringTape->MoveHeadRight();

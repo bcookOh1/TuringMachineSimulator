@@ -40,6 +40,11 @@ const std::string TWO_WAY_LEFT_BOUNDARY = "#";
 const std::string TAPE_LEFT_SYMBOL = "L";
 const std::string TAPE_RIGHT_SYMBOL = "R";
 
+// used for creating active state node color in gv files
+const std::string StatesCommentPrefex = " // states:";
+const std::string BlackAttribStr = " [color=\"#000003\"];";
+const std::string RedAttribStr = " [color=\"#FF0000\"];";
+
 // boost xpressive sregex constants for reading the definition file 
 const sregex Sre_Configuration = as_xpr("variant:") >> 
                                  xpressive::optional(" ") >> 

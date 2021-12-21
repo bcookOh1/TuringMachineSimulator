@@ -102,6 +102,10 @@ private:
    int SetupGUITape(TmConfiguration configuration);
    void SetStatus(RunState rs);
 
+   // used in gv file creation
+   std::string _gvFullPath;
+
+
 public:
    MainWind(int w, int h, const char* title);
    ~MainWind();

@@ -522,7 +522,7 @@ bool TuringMachine::GetNextTapePosition(TapeData &tapeData){
 
 
 // bcook 12-08-2021
-int TuringMachine::WriteGraphvizDotFile(std::string fname) {
+int TuringMachine::WriteGraphvizDotFile(std::string tmFilename, std::string &gvFullPath) {
 
    using namespace boost::filesystem;
    using namespace std;
@@ -563,7 +563,7 @@ int TuringMachine::WriteGraphvizDotFile(std::string fname) {
 
 
    // create a graphviz dot file folder
-   path graphviz_folder{"gv_files"};
+   path graphviz_folder{"graph_files"};
    try {
       create_directory(absolute(graphviz_folder));
    }
@@ -575,7 +575,7 @@ int TuringMachine::WriteGraphvizDotFile(std::string fname) {
    // make a graphviz file name
    path fullpath = current_path();
    fullpath /= graphviz_folder;
-   fullpath /= string(fname + ".gv");
+   fullpath /= string(tmFilename + ".gv");
 
    // open the file and overwrite if already exists 
    std::ofstream outfile;
@@ -584,9 +584,23 @@ int TuringMachine::WriteGraphvizDotFile(std::string fname) {
       return -2;
    } // end if 
 
-   outfile << "digraph { \n // dot -Tsvg addition.gv -o addition.svg \n   rankdir = LR" << endl;
 
-   for_each(begin(stateList), end(stateList), [&](string item) {outfile << "   " << item << "[color = \"#000003\"];" << endl; });
+   // copy the gv (dot format) path to the parameter  
+   gvFullPath = fullpath.string();
+
+   outfile << "digraph { \n // dot -Tsvg gvFilename.gv -o gvImage.svg" << endl;
+   
+   // add a coma separated state list, uses to add a state ellipse color
+   ostringstream oss;
+   oss << StatesCommentPrefex;
+   for_each(begin(stateList), end(stateList), [&](string item) {oss << item << ","; });
+   string stateLine = oss.str();
+   stateLine.pop_back();
+
+   outfile << stateLine << endl;
+   outfile << "   rankdir = LR" << endl;
+
+   for_each(begin(stateList), end(stateList), [&](string item) {outfile << "   " << item << BlackAttribStr << endl; });
    for_each(begin(stateToStateTransition), end(stateToStateTransition), [&](auto const &mpair) {
       outfile << "   " << mpair.first << " [label=\"" << mpair.second << "\"]; "<< endl; }
    );
