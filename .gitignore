@@ -1,6 +1,0 @@
-bin/*.*
-tms.exe
-.vscode/*.*
-TuringMachineSimulator.code-workspace
-*.gv
-*.svg
