@@ -135,7 +135,7 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
 
    Fl_File_Chooser chooser(desktop.c_str(), "*.tm", 
                            Fl_File_Chooser::SINGLE, "Turing Machine");
-   chooser.directory("D:/TmSim_solution/TuringMachineSimulator/tms" /*desktop.c_str()*/);
+   chooser.directory("./tms" /*desktop.c_str()*/);
 
    chooser.show();
 
@@ -166,7 +166,7 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
       // bcook 12-08-2021
       mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
       mainwind->_ipcWriter->Open();
-      bp::spawn("D:/VscProjects/DotSvg/gviz.exe D:/VscProjects/DotSvg/img/BinaryAddition.gv");
+      bp::spawn("gviz.exe ./img/BinaryAddition.gv");
 
    } // end if
 
@@ -419,6 +419,19 @@ void MainWind::RunTimerCB(void *data) {
 
          break;
 
+      // added to be complete but should not happen
+      case TmStatus::InvalidRightMove:
+
+         mainwind->_btnRun->value(0);
+         RunButtonCB(mainwind->_btnRun, data);
+
+         // write result to GUI
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
+                                      RunState::InvalidRightMove)].c_str());
+         mainwind->SetStatus(RunState::InvalidRightMove);
+
+         break;
+
       // should not happen 
       default: 
          break;
@@ -432,6 +445,8 @@ void MainWind::RunTimerCB(void *data) {
       mainwind->SetStatus(RunState::SomethingWentWrong);
 
    } // end if 
+
+   // mainwind->_ipcWriter.push();
 
    return;
 } // end RunButtonCB
@@ -460,6 +475,9 @@ int MainWind::SetTapeSymbolAndMoveTheHead(Transition transition) {
       ret = _grpTuringTape->MoveHeadLeft();
 
    _grpTuringTape->SetHeadState(transition.GetState());
+
+   // 12-23-2021 send to show_diagram
+   _ipcWriter->Push(1,transition.GetState());
 
    return ret;
 } // end SetTapeSymbolAndMoveTheHead
