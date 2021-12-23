@@ -119,6 +119,7 @@ enum class TmStatus : int {
    AcceptedOnFinalState,
    RejectedNotOnFinalState,
    InvalidLeftMove,
+   InvalidRightMove,
    SomethingWentWrong
 }; // end enum
 
@@ -138,6 +139,7 @@ enum class RunState : int {
    Canceled,
    Running,
    InvalidLeftMove,
+   InvalidRightMove,
    SomethingWentWrong
 }; // end enum
 
@@ -149,6 +151,7 @@ const StringVector RunStateText = {"Off" ,
                                    "UserCanceled",
                                    "Running",
                                    "InvalidLeftMove",
+                                   "InvalidRightMove",
                                    "SomethingWentWrong"};
 
 

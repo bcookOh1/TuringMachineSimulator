@@ -26,10 +26,15 @@
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_File_Chooser.H>
-#include "CommonDef.h"
-#include "GroupTuringTape.h"
+#include <boost/process.hpp>
 #include <string>
 #include <tuple>
+#include "CommonDef.h"
+#include "GroupTuringTape.h"
+#include <ipcq.h>
+
+
+namespace bp = boost::process;
 
 
 // sets of colors a = lighter
@@ -75,6 +80,8 @@ private:
    std::string _partialfname;
    std::string _definitionfile;
    TuringMachine *_tm;  // turing machine 
+
+   ipcq::IpcQueueWriter *_ipcWriter;
 
    // control callbacks
    static void ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param);

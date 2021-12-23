@@ -27,6 +27,7 @@ MainWind::MainWind(int w, int h, const char* title) :
    _validInputString = false;
    _running = false;
    _complete = false;
+   _ipcWriter = new ipcq::IpcQueueWriter(QueueName);
 
 } // end ctor
 
@@ -36,6 +37,8 @@ MainWind::~MainWind() {
    if(_tm != nullptr) {
       delete _tm;
    } // end if 
+
+   delete _ipcWriter;
 
    // fltk deletes the widgets
 } // end dtor
@@ -162,8 +165,10 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
 
       // bcook 12-08-2021
       mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
+      mainwind->_ipcWriter->Open();
+      bp::spawn("D:/VscProjects/DotSvg/gviz.exe D:/VscProjects/DotSvg/img/BinaryAddition.gv");
 
-   } // end if 
+   } // end if
 
    return;
 } // end ShowDefinitionFileDialogCB
@@ -650,6 +655,12 @@ void MainWind::SetRunStatusBox(RunState rs) {
       _lbRunState->color(FL_RED);
       _lbRunState->label(RunStateText[static_cast<int>(
       RunState::InvalidLeftMove)].c_str());
+      _lbRunState->show();
+   break;
+   case RunState::InvalidRightMove:
+      _lbRunState->color(FL_RED);
+      _lbRunState->label(RunStateText[static_cast<int>(
+      RunState::InvalidRightMove)].c_str());
       _lbRunState->show();
    break;
    case RunState::SomethingWentWrong:

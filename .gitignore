@@ -1,0 +1,7 @@
+/exes/img/*.svg
+/exes/img/*.jpg
+/exes/*.exe
+/show_diagram/bin/*.*
+/simulator/bin/*.*
+.vscode/*.*
+

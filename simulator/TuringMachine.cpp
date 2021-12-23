@@ -10,7 +10,7 @@
 
 
 #include "TuringMachine.h"
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -311,11 +311,15 @@ int TuringMachine::TransitionStep() {
          // all right moves are valid, 
          // in standard left of first B is invalid  
          // in two-way left of '#' is invalid, as defined by Sudkamp page 265 
+         int result = 0;
          if(direction == TAPE_RIGHT_SYMBOL) {
-            int result = MoveHeadRight();
+            result = MoveHeadRight();
+            if(-1 == result) {
+               _status = TmStatus::InvalidRightMove;
+            } // end if 
          }
          else {
-            int result = result = MoveHeadLeft();
+            result = MoveHeadLeft();
             if(-1 == result) {
                _status = TmStatus::InvalidLeftMove;
             } // end if 
@@ -524,8 +528,8 @@ bool TuringMachine::GetNextTapePosition(TapeData &tapeData){
 // bcook 12-08-2021
 int TuringMachine::WriteGraphvizDotFile(std::string tmFilename, std::string &gvFullPath) {
 
-   using namespace boost::filesystem;
    using namespace std;
+   namespace fs = std::filesystem;
    using std::begin;
    using std::end;
 
@@ -563,23 +567,23 @@ int TuringMachine::WriteGraphvizDotFile(std::string tmFilename, std::string &gvF
 
 
    // create a graphviz dot file folder
-   path graphviz_folder{"graph_files"};
+   fs::path graphviz_folder{"img"};
    try {
-      create_directory(absolute(graphviz_folder));
+      fs::create_directory(absolute(graphviz_folder));
    }
-   catch(filesystem_error &e) {
-      std::cerr << e.what() << '\n';
+   catch(fs::filesystem_error &e) {
+      cerr << e.what() << '\n';
       return -1;
    } // end try/catch
 
    // make a graphviz file name
-   path fullpath = current_path();
+   fs::path fullpath = fs::current_path();
    fullpath /= graphviz_folder;
    fullpath /= string(tmFilename + ".gv");
 
    // open the file and overwrite if already exists 
-   std::ofstream outfile;
-   outfile.open(fullpath.c_str(), std::ofstream::trunc);
+   ofstream outfile;
+   outfile.open(fullpath.c_str(), ofstream::trunc);
    if(outfile.fail()) {
       return -2;
    } // end if 
