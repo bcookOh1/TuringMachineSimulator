@@ -12,6 +12,8 @@
 #include "TuringMachine.h"
 #include "Transition.h"
 #include "TuringMachineFactory.h"
+#include <chrono>
+#include <thread>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -22,6 +24,9 @@ MainWind::MainWind(int w, int h, const char* title) :
    Fl_Double_Window(20, 20, w, h, title) {
    SetupControls(w, h);
    
+   this->callback(MainWindOnCloseCB);
+
+
    _tm = nullptr;
    _validFile = false;
    _validInputString = false;
@@ -42,6 +47,23 @@ MainWind::~MainWind() {
 
    // fltk deletes the widgets
 } // end dtor
+
+// event trap callback to ignore the escape key press 
+// ref: http://www.fltk.org/articles.php?L378+I0+TFAQ+P1+Q
+void MainWind::MainWindOnCloseCB(Fl_Widget *wind, void *data) {
+   if(Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape)
+      return; // ignore Escape
+
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(wind);
+   
+   // 12-23-2021 send to show_diagram
+   mainwind->_ipcWriter->Push(0,string("none"));
+
+   mainwind->hide();
+   // exit(0);
+} // end MainWindOnCloseCB
+
 
 // a fuction to do the intial setup on the GUI elements 
 void MainWind::SetupControls(int w, int h) {
@@ -445,8 +467,6 @@ void MainWind::RunTimerCB(void *data) {
       mainwind->SetStatus(RunState::SomethingWentWrong);
 
    } // end if 
-
-   // mainwind->_ipcWriter.push();
 
    return;
 } // end RunButtonCB

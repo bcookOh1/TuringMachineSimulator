@@ -89,6 +89,7 @@ private:
    static void ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param);
    static void UserInputStringCB(Fl_Widget *widget, void *param);
    static void RunTimerCB(void *data);
+   static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
 
    std::string GetDefinitionfile();
    void SetDefinitionfile(const std::string &filename);
