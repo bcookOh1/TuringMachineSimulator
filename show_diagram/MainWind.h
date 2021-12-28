@@ -63,7 +63,7 @@ private:
    static void LoadImageTimerCB(void *param);
    static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
 
-   int ShowLoadJpg();
+   int ShowLoadingJpg();
    int LoadImagesAsync();
    int ConvertGvAndLoadJpgs();
    int ShowImageForState(const string &state = AllOffTm);

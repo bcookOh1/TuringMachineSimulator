@@ -12,7 +12,7 @@ MainWind::MainWind(int w, int h, const char* title) :
 
    end(); // fltk call, ends additions to gui tree
 
-   ShowLoadJpg();
+   // ShowLoadingJpg();
 
    _ipcqReader = new ipcq::IpcQueueReader(QueueName);
    _ipcqIsOpen = false;
@@ -53,19 +53,20 @@ int MainWind::handle(int msg){
 } // end handle
 
 
-int MainWind::ShowLoadJpg(){
+int MainWind::ShowLoadingJpg(){
    int ret = 0;
 
    // set the main window and the box to the original sizes
    this->size(MainWind_W_Max, MainWind_H_Max);
    _box->size(Box_W_Max, Box_H_Max);
 
-   _jpg = new Fl_JPEG_Image("loading.jpg");  
+   _jpg = new Fl_JPEG_Image("loading.jpg");
    _jpg->scale(_box->w(), _box->h());
    _box->image(_jpg);
+   this->redraw();
 
    return ret;
-} // end ShowLoadJpg
+} // end ShowLoadingJpg
 
 
 void MainWind::StartupTimerCB(void *param) {
@@ -136,7 +137,7 @@ int MainWind::ReadIpcq(){
             break;
          case static_cast<unsigned int>(IpcqCmd::GvFile):
             _gvFile = state;
-            ShowLoadJpg();
+            ShowLoadingJpg();
             LoadImagesAsync();
             Fl::add_timeout(1.0, LoadImageTimerCB, this);
             break;
