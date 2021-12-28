@@ -2,6 +2,7 @@
 variant: standard
 description: binary addition
 start: q0
+final: {q29}
 tape_symbols: {B,#,X,Y,C,+,=}
 alphabet: {0,1}
 input_example: 101+111
@@ -35,7 +36,7 @@ q24   |   -     | q24,0,L | q24,1,L |   -     |   -     |   -     |   -     | q2
 q25   |   -     |   -     |   -     |   -     | q15,=,L |   -     |   -     |   -     |   -     |   -     | q15,C,L  // set the carry was C
 q26   |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |    -
 q27   | q28,B,L | q27,0,R | q27,1,R | q27,+,R | q27,=,R | q27,X,R | q27,Y,R | q27,1,R |   -     |   -     | q27,0,R  // fix C or #
-q28   |   -     | q28,0,L | q28,1,L | q28,+,L | q28,=,L | q28,X,L | q28,Y,L | q28,1,L |   -     |   -     | q28,0,L  // goto left B and halt
+q28   |   -     | q28,0,L | q28,1,L | q28,+,L | q28,=,L | q29,X,L | q28,Y,L | q28,1,L |   -     |   -     | q28,0,L  // goto left B and halt
 q29   |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -     |   -    
 transition_function_table_end:
 
