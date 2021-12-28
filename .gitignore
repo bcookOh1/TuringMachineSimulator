@@ -1,5 +1,6 @@
 /exes/img/*.svg
 /exes/img/*.jpg
+/exes/img/*.gv
 /exes/*.exe
 /show_diagram/bin/*.*
 /simulator/bin/*.*

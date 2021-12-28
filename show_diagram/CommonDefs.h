@@ -31,10 +31,10 @@ enum class IpcqCmd : unsigned int {
 
 // window/box/image sizing 
 const int Inside_Border = 10;
-const int MainWind_W_Max = 1210;
-const int MainWind_H_Max = 610;
-const int MainWind_W_Min = 610;
-const int MainWind_H_Min = 310;
+const int MainWind_W_Max = 1220;
+const int MainWind_H_Max = 620;
+const int MainWind_W_Min = 620;
+const int MainWind_H_Min = 320;
 
 const int Box_W_Max = MainWind_W_Max - (2 * Inside_Border);
 const int Box_H_Max = MainWind_H_Max - (2 * Inside_Border);

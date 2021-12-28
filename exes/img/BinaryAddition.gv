@@ -1,6 +1,6 @@
 digraph { 
  // dot -Tsvg gvFilename.gv -o gvImage.svg
- // states:q0,q10,q11,q12,q13,q14,q15,q17,q18,q2,q21,q22,q23,q24,q25,q27,q28,q3,q4,q5,q6,q7,q9
+ // states:q0,q10,q11,q12,q13,q14,q15,q17,q18,q2,q21,q22,q23,q24,q25,q27,q28,q29,q3,q4,q5,q6,q7,q9
    rankdir = LR
    q0 [color="#000003"];
    q10 [color="#000003"];
@@ -19,6 +19,7 @@ digraph {
    q25 [color="#000003"];
    q27 [color="#000003"];
    q28 [color="#000003"];
+   q29 [color="#000003"];
    q3 [color="#000003"];
    q4 [color="#000003"];
    q5 [color="#000003"];
@@ -60,7 +61,8 @@ digraph {
    q25 -> q15 [label="#/C L\n=/= L"]; 
    q27 -> q27 [label="#/0 R\n+/+ R\n0/0 R\n1/1 R\n=/= R\nC/1 R\nX/X R\nY/Y R"]; 
    q27 -> q28 [label="B/B L"]; 
-   q28 -> q28 [label="#/0 L\n+/+ L\n0/0 L\n1/1 L\n=/= L\nC/1 L\nX/X L\nY/Y L"]; 
+   q28 -> q28 [label="#/0 L\n+/+ L\n0/0 L\n1/1 L\n=/= L\nC/1 L\nY/Y L"]; 
+   q28 -> q29 [label="X/X L"]; 
    q3 -> q4 [label="B/# L"]; 
    q4 -> q4 [label="#/# L\n+/+ L\n0/0 L\n1/1 L\n=/= L"]; 
    q4 -> q5 [label="B/B R\nU/U R\nV/V R"]; 

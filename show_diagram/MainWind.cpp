@@ -6,11 +6,9 @@
 MainWind::MainWind(int w, int h, const char* title) :
  Fl_Double_Window(20, 20, w, h, title) {
 
-   _idx = 0;
-
+   _imageLoopIdx = 0;
    this->callback(MainWindOnCloseCB);
-
-   _box = new Fl_Box(10,10,w-10,h-10);
+   _box = new Fl_Box(Inside_Border, Inside_Border, Box_W_Max, Box_H_Max);
 
    end(); // fltk call, ends additions to gui tree
 
@@ -58,9 +56,13 @@ int MainWind::handle(int msg){
 int MainWind::ShowLoadJpg(){
    int ret = 0;
 
+   // set the main window and the box to the original sizes
+   this->size(MainWind_W_Max, MainWind_H_Max);
+   _box->size(Box_W_Max, Box_H_Max);
+
    _jpg = new Fl_JPEG_Image("loading.jpg");  
-   _box->image(_jpg);
    _jpg->scale(_box->w(), _box->h());
+   _box->image(_jpg);
 
    return ret;
 } // end ShowLoadJpg
@@ -185,7 +187,12 @@ int MainWind::ConvertGvAndLoadJpgs(){
 
    auto stop = high_resolution_clock::now();
    auto duration = duration_cast<milliseconds>(stop - start);
-   cout << "load images duration: " << duration.count() << " ms" << std::endl;
+
+   // get the file  name from the fuill path
+   fs::path fp(_gvFile);
+   string tmName = (fp.has_stem() ? fp.stem().string() : _gvFile);
+
+   cout << tmName << ": load images duration: " << duration.count() << " ms" << endl;
 
    return ret;
 } // end ConvertGvAndLoadJpgs
@@ -197,7 +204,31 @@ int MainWind::ShowImageForState(const string &state){
    auto iter = _images.find(state);
    if(iter != _images.end()){
       _jpg = iter->second;
-      AppAndImageResize();
+
+      // do this once when the AllOffTm is shown
+      // assumed that all images in this "tm" are the same size
+      if(state == AllOffTm){
+
+         cout << "1) w:(" << this->w() << "," << this->h() << ") " << 
+                    "b:(" << _box->w() << "," << _box->h() << ") " << 
+                  "jpg:(" << _jpg->w() << "," << _jpg->h() << ")\n";
+
+         ResizeMainWindAndBox();
+      } // endif 
+
+      // always resize the image to the box size 
+      _jpg->scale(_box->w(), _box->h(), 0, 1);
+      _box->image(_jpg);
+      redraw();
+
+      if(state == AllOffTm){
+
+         cout << "2) w:(" << this->w() << "," << this->h() << ") " << 
+                    "b:(" << _box->w() << "," << _box->h() << ") " << 
+                  "jpg:(" << _jpg->w() << "," << _jpg->h() << ")\n";
+
+      } // endif 
+
    }
    else {
       ret = -1;
@@ -207,7 +238,7 @@ int MainWind::ShowImageForState(const string &state){
 } // end ShowImageForState
 
 
-int MainWind::AppAndImageResize(){
+int MainWind::ResizeMainWindAndBox(){
    int ret = 0;
 
    int img_w = _jpg->w();
@@ -226,23 +257,20 @@ int MainWind::AppAndImageResize(){
 
    auto w_h = BoxDimsFromWind(this->w(), this->h());
    _box->resize(Inside_Border, Inside_Border, std::get<0>(w_h), std::get<1>(w_h));
-   _jpg->scale(_box->w(), _box->h(), 0);
-   _box->image(_jpg);
-   redraw();
 
    return ret;
-} // end AppAndImageResize
+} // end ResizeMainWindAndBox
 
 
 int MainWind::LoopImages(){
    int ret = 0;
 
-   _idx = (_idx >= _gvtojpg.GetImageCount() ? 0 : _idx);
+   _imageLoopIdx = (_imageLoopIdx >= _gvtojpg.GetImageCount() ? 0 : _imageLoopIdx);
    string stateName;
    string jpgFile;
-   _gvtojpg.GetStateNameAndJpgFromIndex(_idx, stateName, jpgFile);
+   _gvtojpg.GetStateNameAndJpgFromIndex(_imageLoopIdx, stateName, jpgFile);
    ShowImageForState(stateName);
-   _idx++;
+   _imageLoopIdx++;
 
    return ret;
 } // end LoopImages

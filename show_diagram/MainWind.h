@@ -7,6 +7,7 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_JPEG_Image.H>
 #include <boost/algorithm/string.hpp>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <map>
@@ -24,6 +25,7 @@
 using namespace std;
 using namespace boost::algorithm;
 using namespace std::chrono;
+namespace fs = std::filesystem;
 
 
 class MainWind : public Fl_Double_Window {
@@ -38,7 +40,7 @@ public:
 
 private:
 
-   size_t _idx;
+   size_t _imageLoopIdx;
    int LoopImages();
 
    Fl_Box *_box; 
@@ -67,7 +69,7 @@ private:
    int ShowImageForState(const string &state = AllOffTm);
    int DeleteTemporaryImages();
 
-   int AppAndImageResize();
+   int ResizeMainWindAndBox();
 
 }; // end class
 
