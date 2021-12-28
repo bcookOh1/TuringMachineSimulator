@@ -3,19 +3,18 @@
 #include "MainWind.h"
 
 
-MainWind::MainWind(int w, int h, const char* title, string gvFile) :
+MainWind::MainWind(int w, int h, const char* title) :
  Fl_Double_Window(20, 20, w, h, title) {
 
-    _idx = 0;
-    _gvFile = gvFile;
+   _idx = 0;
+
+   this->callback(MainWindOnCloseCB);
 
    _box = new Fl_Box(10,10,w-10,h-10);
-   _jpg = new Fl_JPEG_Image("loading.jpg");  
 
    end(); // fltk call, ends additions to gui tree
 
-   _box->image(_jpg);
-   _jpg->scale(_box->w(), _box->h());
+   ShowLoadJpg();
 
    _ipcqReader = new ipcq::IpcQueueReader(QueueName);
    _ipcqIsOpen = false;
@@ -30,6 +29,20 @@ MainWind::~MainWind(){
 } // end dtor
 
 
+// event trap callback to ignore the escape key press 
+// ref: http://www.fltk.org/articles.php?L378+I0+TFAQ+P1+Q
+void MainWind::MainWindOnCloseCB(Fl_Widget *wind, void *data) {
+   if(Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape)
+      return; // ignore Escape
+
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(wind);
+   mainwind->hide();
+
+} // end MainWindOnCloseCB
+
+
+// handles keyboard down arrow to loop through images
 int MainWind::handle(int msg){
    int ret = 0;
 
@@ -41,21 +54,24 @@ int MainWind::handle(int msg){
    return ret;
 } // end handle
 
+
+int MainWind::ShowLoadJpg(){
+   int ret = 0;
+
+   _jpg = new Fl_JPEG_Image("loading.jpg");  
+   _box->image(_jpg);
+   _jpg->scale(_box->w(), _box->h());
+
+   return ret;
+} // end ShowLoadJpg
+
+
 void MainWind::StartupTimerCB(void *param) {
 
    Fl::remove_timeout(StartupTimerCB, param);
 
    // use like a 'this' pointer
    auto mainwind = static_cast<MainWind *>(param);
-
-   auto start = high_resolution_clock::now();
-
-   mainwind->LoadImages();
-   mainwind->ShowImageForState(AllOffTm);
-
-   auto stop = high_resolution_clock::now();
-   auto duration = duration_cast<milliseconds>(stop - start);
-   cout << "load images duration: " << duration.count() << " ms" << std::endl;
 
    // open the ipcq for reading  
    int result = mainwind->_ipcqReader->Open();
@@ -67,27 +83,43 @@ void MainWind::StartupTimerCB(void *param) {
       cout << mainwind->_ipcqReader->GetErrorStr() << endl;
    } // end if 
 
-   Fl::add_timeout(1.0, ReadActiveStateCB, param);
+   // this_thread::sleep_for(chrono::milliseconds(30000));
+
+   Fl::add_timeout(1.0, ReadIpcqCB, param);
 
    return;
 } // StartupTimerCB
 
 
-void MainWind::ReadActiveStateCB(void *param) {
+void MainWind::LoadImageTimerCB(void *param){
 
-   Fl::remove_timeout(StartupTimerCB, param);
-
-   // use like a 'this' pointer
+   // cast param to MainWind* and use like a 'this' pointer
    auto mainwind = static_cast<MainWind *>(param);
-   mainwind->ReadActiveStateFromIpcq();
-
-   Fl::add_timeout(.09, ReadActiveStateCB, param);
+   if(mainwind->_futJpgsLoaded.wait_for(0ms) == future_status::ready){
+      mainwind->ShowImageForState();
+      Fl::remove_timeout(LoadImageTimerCB, param);
+   }
+   else {
+      Fl::repeat_timeout(1.0, LoadImageTimerCB, param);
+   } // end if 
 
    return;
-} // end ReadActiveStateCB
+} // end LoadImageTimerCB
 
 
-int MainWind::ReadActiveStateFromIpcq(){
+void MainWind::ReadIpcqCB(void *param) {
+
+      // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+   mainwind->ReadIpcq();
+
+   Fl::repeat_timeout(.09, ReadIpcqCB, param);
+
+   return;
+} // end ReadIpcqCB
+
+
+int MainWind::ReadIpcq(){
    int ret = -1;
 
    if(_ipcqIsOpen == true){
@@ -96,21 +128,41 @@ int MainWind::ReadActiveStateFromIpcq(){
 
       int result = _ipcqReader->Pop(cmd, state);
       if(result == 0){
-         if(cmd == 1){
+         switch(cmd){
+         case static_cast<unsigned int>(IpcqCmd::Close):
+            hide();
+            break;
+         case static_cast<unsigned int>(IpcqCmd::GvFile):
+            _gvFile = state;
+            ShowLoadJpg();
+            LoadImagesAsync();
+            Fl::add_timeout(1.0, LoadImageTimerCB, this);
+            break;
+         case static_cast<unsigned int>(IpcqCmd::NewState):
             result = ShowImageForState(state);
-         } // end if 
-      }
-      else {
-         cout << _ipcqReader->GetErrorStr() << endl;
+            break;
+         } // end switch
       } // end if 
-      
    } // end if 
 
    return ret;
 } // end ReadActiveStateFromIpcq
 
-int MainWind::LoadImages(){
+
+int MainWind::LoadImagesAsync(){
    int ret = 0;
+   _futJpgsLoaded = std::async(launch::async, [&]() -> int { return ConvertGvAndLoadJpgs(); });
+   return ret;
+} // end LoadImagesAsync
+
+
+// ret -1 on error 
+// ret >= 0 on number of images loaded  
+int MainWind::ConvertGvAndLoadJpgs(){
+   int ret = 0;
+
+   auto start = high_resolution_clock::now(); 
+   _images.clear();
 
    int result = _gvtojpg.ConvertGv(_gvFile);
    if(result != 0) {
@@ -125,12 +177,18 @@ int MainWind::LoadImages(){
          _images.insert(std::make_pair(n, new Fl_JPEG_Image(f.c_str())));
       } // end if 
 
+      ret = static_cast<int>(_images.size());
+
    } // end if 
 
    DeleteTemporaryImages();
 
+   auto stop = high_resolution_clock::now();
+   auto duration = duration_cast<milliseconds>(stop - start);
+   cout << "load images duration: " << duration.count() << " ms" << std::endl;
+
    return ret;
-} // end initialize
+} // end ConvertGvAndLoadJpgs
 
 
 int MainWind::ShowImageForState(const string &state){
@@ -139,9 +197,7 @@ int MainWind::ShowImageForState(const string &state){
    auto iter = _images.find(state);
    if(iter != _images.end()){
       _jpg = iter->second;
-      _box->image(_jpg);
-      _jpg->scale(_box->w(), _box->h());
-      _box->redraw();
+      AppAndImageResize();
    }
    else {
       ret = -1;
@@ -149,6 +205,33 @@ int MainWind::ShowImageForState(const string &state){
 
    return ret;
 } // end ShowImageForState
+
+
+int MainWind::AppAndImageResize(){
+   int ret = 0;
+
+   int img_w = _jpg->w();
+   int img_h = _jpg->h(); 
+
+   if(img_w > Box_W_Max || img_h > Box_H_Max ) { // scale jpg to max
+      this->size(MainWind_W_Max, MainWind_H_Max);
+   }
+   else if (img_w < Box_W_Min || img_h < Box_H_Min ) { // scale jpg to min
+      this->size(MainWind_W_Min, MainWind_H_Min);
+   }
+   else {
+      auto w_h = WindDimsFromJpg(img_w, img_h);
+      this->size(std::get<0>(w_h), std::get<1>(w_h));
+   } // end if 
+
+   auto w_h = BoxDimsFromWind(this->w(), this->h());
+   _box->resize(Inside_Border, Inside_Border, std::get<0>(w_h), std::get<1>(w_h));
+   _jpg->scale(_box->w(), _box->h(), 0);
+   _box->image(_jpg);
+   redraw();
+
+   return ret;
+} // end AppAndImageResize
 
 
 int MainWind::LoopImages(){

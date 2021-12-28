@@ -13,6 +13,9 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <thread>
+#include <future>
+#include <atomic>
 #include <ipcq.h>
 #include "CommonDefs.h"
 #include "GvToJpeg.h"
@@ -26,9 +29,11 @@ using namespace std::chrono;
 class MainWind : public Fl_Double_Window {
 public:
 
-   MainWind(int w, int h, const char* title, string gvFile);
+   MainWind(int w, int h, const char* title);
    ~MainWind();
 
+   // event handler for down arrow to roll images,
+   // called by the event framework
    int handle(int msg);
 
 private:
@@ -46,15 +51,23 @@ private:
 
    ipcq::IpcQueueReader *_ipcqReader;
    bool _ipcqIsOpen;
+   future<int> _futJpgsLoaded;
 
-   int ReadActiveStateFromIpcq();
+   int ReadIpcq();
 
-   static void StartupTimerCB(void *data);
-   static void ReadActiveStateCB(void *data);
+   // callbacks 
+   static void StartupTimerCB(void *param);
+   static void ReadIpcqCB(void *param);
+   static void LoadImageTimerCB(void *param);
+   static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
 
-   int LoadImages();
+   int ShowLoadJpg();
+   int LoadImagesAsync();
+   int ConvertGvAndLoadJpgs();
    int ShowImageForState(const string &state = AllOffTm);
    int DeleteTemporaryImages();
+
+   int AppAndImageResize();
 
 }; // end class
 

@@ -32,7 +32,16 @@ MainWind::MainWind(int w, int h, const char* title) :
    _validInputString = false;
    _running = false;
    _complete = false;
-   _ipcWriter = new ipcq::IpcQueueWriter(QueueName);
+   _ipcqWriter = new ipcq::IpcQueueWriter(QueueName);
+
+   // open the ipcq for writing
+   int result = _ipcqWriter->Open();
+   if(result != 0){
+      std::cout << _ipcqWriter->GetErrorStr() << std::endl;
+      exit(0);
+   } // end if 
+
+   _child = nullptr;
 
 } // end ctor
 
@@ -43,7 +52,7 @@ MainWind::~MainWind() {
       delete _tm;
    } // end if 
 
-   delete _ipcWriter;
+   delete _ipcqWriter;
 
    // fltk deletes the widgets
 } // end dtor
@@ -57,8 +66,8 @@ void MainWind::MainWindOnCloseCB(Fl_Widget *wind, void *data) {
    // use like a 'this' pointer
    auto mainwind = static_cast<MainWind *>(wind);
    
-   // 12-23-2021 send to show_diagram
-   mainwind->_ipcWriter->Push(0,string("none"));
+   // 12-25-2021 close the show_diagram process
+   mainwind->_ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::Close),string("none"));
 
    mainwind->hide();
    // exit(0);
@@ -185,10 +194,21 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
       GetFilenameFromPath(fname);
       mainwind->_partialfname = fname;
 
-      // bcook 12-08-2021
       mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
-      mainwind->_ipcWriter->Open();
-      bp::spawn("gviz.exe ./img/BinaryAddition.gv");
+
+      if(mainwind->_child == nullptr) {
+         mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
+      }
+      else {
+
+         if(mainwind->_child->running() == false){
+            mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
+         } // end uf 
+
+      } // end if 
+      
+      int result = mainwind->_ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::GvFile),mainwind->_gvFullPath);
+      assert((result == 0)&&("ShowDefinitionFileDialogCB: ipcq push failed"));
 
    } // end if
 
@@ -497,7 +517,7 @@ int MainWind::SetTapeSymbolAndMoveTheHead(Transition transition) {
    _grpTuringTape->SetHeadState(transition.GetState());
 
    // 12-23-2021 send to show_diagram
-   _ipcWriter->Push(1,transition.GetState());
+   _ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::NewState),transition.GetState());
 
    return ret;
 } // end SetTapeSymbolAndMoveTheHead

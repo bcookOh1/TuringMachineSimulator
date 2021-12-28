@@ -180,9 +180,10 @@ int TuringMachineFactory::Factory(const std::string &line, int lineNumber) {
          _tm->AddTransitionTableRow(transitionRow);
 
          // 12-07-2021 bcook debug 
-         std::cout << "..transition row, " << transitionRow.first << std::endl;
-         for(auto iter = transitionRow.second.begin(); iter != transitionRow.second.end(); ++iter)
-            std::cout << ".." << iter->second.toStr() << std::endl;
+         // std::cout << "..transition row, " << transitionRow.first << std::endl;
+         // for(auto iter = transitionRow.second.begin(); iter != transitionRow.second.end(); ++iter)
+         //   std::cout << ".." << iter->second.toStr() << std::endl;
+      
       } // end if 
 
    } 

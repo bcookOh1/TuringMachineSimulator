@@ -155,6 +155,13 @@ const StringVector RunStateText = {"Off" ,
                                    "SomethingWentWrong"};
 
 
+enum class IpcqCmd : unsigned int {
+   Close = 0,
+   GvFile,
+   NewState
+}; // end enum
+
+
 // example file definition file 
 /*
 variant: standard|two_way

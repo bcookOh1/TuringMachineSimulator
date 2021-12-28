@@ -27,6 +27,7 @@
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_File_Chooser.H>
 #include <boost/process.hpp>
+#include <cassert>
 #include <string>
 #include <tuple>
 #include "CommonDef.h"
@@ -81,7 +82,8 @@ private:
    std::string _definitionfile;
    TuringMachine *_tm;  // turing machine 
 
-   ipcq::IpcQueueWriter *_ipcWriter;
+   ipcq::IpcQueueWriter *_ipcqWriter;
+   std::unique_ptr<bp::child> _child;
 
    // control callbacks
    static void ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param);
