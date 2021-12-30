@@ -45,11 +45,13 @@ private:
 
    Fl_Box *_box; 
    Fl_JPEG_Image *_jpg; 
+   Fl_JPEG_Image *_loading; 
 
    GvToJpeg _gvtojpg;
 
+   string _title;
    string _gvFile;
-   map<string, Fl_JPEG_Image*> _images;
+   map<string, unique_ptr<Fl_JPEG_Image>> _images;
 
    ipcq::IpcQueueReader *_ipcqReader;
    bool _ipcqIsOpen;

@@ -2,6 +2,8 @@
 
 #include "MainWind.h"
 
+// save this for when needed
+// this_thread::sleep_for(chrono::milliseconds(30000));
 
 MainWind::MainWind(int w, int h, const char* title) :
  Fl_Double_Window(20, 20, w, h, title) {
@@ -12,8 +14,7 @@ MainWind::MainWind(int w, int h, const char* title) :
 
    end(); // fltk call, ends additions to gui tree
 
-   // ShowLoadingJpg();
-
+   _loading = nullptr; // set once in ShowLoadingJpg()
    _ipcqReader = new ipcq::IpcQueueReader(QueueName);
    _ipcqIsOpen = false;
 
@@ -23,6 +24,7 @@ MainWind::MainWind(int w, int h, const char* title) :
 
 
 MainWind::~MainWind(){
+   if(_loading != nullptr) delete _loading;
    delete _ipcqReader;
 } // end dtor
 
@@ -60,7 +62,12 @@ int MainWind::ShowLoadingJpg(){
    this->size(MainWind_W_Max, MainWind_H_Max);
    _box->size(Box_W_Max, Box_H_Max);
 
-   _jpg = new Fl_JPEG_Image("loading.jpg");
+   // read in loading.jpg once 
+   if(_loading == nullptr){
+      _loading = new Fl_JPEG_Image("loading.jpg");
+   } // end if
+
+   _jpg = _loading; 
    _jpg->scale(_box->w(), _box->h());
    _box->image(_jpg);
    this->redraw();
@@ -86,8 +93,6 @@ void MainWind::StartupTimerCB(void *param) {
       cout << mainwind->_ipcqReader->GetErrorStr() << endl;
    } // end if 
 
-   // this_thread::sleep_for(chrono::milliseconds(30000));
-
    Fl::add_timeout(1.0, ReadIpcqCB, param);
 
    return;
@@ -100,6 +105,7 @@ void MainWind::LoadImageTimerCB(void *param){
    auto mainwind = static_cast<MainWind *>(param);
    if(mainwind->_futJpgsLoaded.wait_for(0ms) == future_status::ready){
       mainwind->ShowImageForState();
+      mainwind->label(mainwind->_title.c_str());
       Fl::remove_timeout(LoadImageTimerCB, param);
    }
    else {
@@ -177,7 +183,7 @@ int MainWind::ConvertGvAndLoadJpgs(){
       string n, f;
       for(size_t i = 0; i < _gvtojpg.GetImageCount(); i++) {
          _gvtojpg.GetStateNameAndJpgFromIndex(i, n, f);
-         _images.insert(std::make_pair(n, new Fl_JPEG_Image(f.c_str())));
+         _images.insert(std::make_pair(n, unique_ptr<Fl_JPEG_Image>(new Fl_JPEG_Image(f.c_str()))));
       } // end if 
 
       ret = static_cast<int>(_images.size());
@@ -192,6 +198,7 @@ int MainWind::ConvertGvAndLoadJpgs(){
    // get the file  name from the fuill path
    fs::path fp(_gvFile);
    string tmName = (fp.has_stem() ? fp.stem().string() : _gvFile);
+   _title = tmName;
 
    cout << tmName << ": load images duration: " << duration.count() << " ms" << endl;
 
@@ -204,7 +211,7 @@ int MainWind::ShowImageForState(const string &state){
 
    auto iter = _images.find(state);
    if(iter != _images.end()){
-      _jpg = iter->second;
+      _jpg = iter->second.get();
 
       // do this once when the AllOffTm is shown
       // assumed that all images in this "tm" are the same size
