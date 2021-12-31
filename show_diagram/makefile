@@ -3,7 +3,7 @@
 BIN := ./bin
 
 # compiler for c++
-CXX := D://msys64//mingw64//bin//g++.exe
+CXX := D:/msys64/mingw64/bin/g++.exe
 CPPFLAGS := -fdiagnostics-color=always -fpermissive -Wall -std=c++17 -c -MMD -MP -O2 -ID:/sw_libs/c++/fltk-1.4_mingw64 \
 -ID:/sw_libs/c++/boost_1_78_0 -ID:/msys64/mingw64/include/graphviz -ID:/sw_libs/c++/ipcq/include
 
