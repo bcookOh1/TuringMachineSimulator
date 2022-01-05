@@ -138,6 +138,7 @@ enum class RunState : int {
    RejectedNotOnFinalState,
    Canceled,
    Running,
+   Paused,
    InvalidLeftMove,
    InvalidRightMove,
    SomethingWentWrong
@@ -150,6 +151,7 @@ const StringVector RunStateText = {"Off" ,
                                    "RejectedNotOnFinalState",
                                    "UserCanceled",
                                    "Running",
+                                   "Paused",
                                    "InvalidLeftMove",
                                    "InvalidRightMove",
                                    "SomethingWentWrong"};
@@ -159,6 +161,32 @@ enum class IpcqCmd : unsigned int {
    Close = 0,
    GvFile,
    NewState
+}; // end enum
+
+
+// not ready
+//    all deactive
+// ready
+//    enable forward step
+//    enable run
+// complete
+//    enable rewind
+// running 
+//    enable pause
+// paused
+//    enable single step
+//    enable run
+//    if NOT at beginning
+//        enable back step
+//        enable rewind
+// enum used by MainWind to set control enables in 
+// GroupRunControls class
+enum class RunControlState : int {
+   NotReady = 0,
+   Ready,
+   Complete,
+   Running,
+   Paused
 }; // end enum
 
 

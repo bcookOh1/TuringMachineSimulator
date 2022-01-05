@@ -32,6 +32,7 @@
 #include <tuple>
 #include "CommonDef.h"
 #include "GroupTuringTape.h"
+#include "GroupRunControls.h"
 #include <ipcq.h>
 
 
@@ -49,7 +50,11 @@ class TuringMachine;
 
 
 class MainWind : public Fl_Double_Window {
+   
+   friend class GroupRunControls;
+
 private:
+
 
    // fltk gui controls
    GroupTuringTape* _grpTuringTape;
@@ -57,10 +62,10 @@ private:
    Fl_Button* _btnFileDialog;
    Fl_Browser* _bwrComputation;
    Fl_Output* _outDescription;
-   Fl_Input_Choice* _icSpeed;
+   // Fl_Input_Choice* _icSpeed;
    Fl_Input* _inString;
    Fl_Button* _btnLoadString;
-   Fl_Light_Button* _btnRun;
+   // Fl_Light_Button* _btnRun;
    Fl_Output* _outStatus;
    Fl_Button* _btnSaveComputation;
    Fl_Box* _lbRunState;
@@ -71,6 +76,13 @@ private:
    Fl_Box* _lbSeq3;
    Fl_Box* _lbSeq4;
 
+   /////////  01-04-222 
+   GroupRunControls* _grpRunControls;
+   // Fl_Button* _btnRewind;
+   // Fl_Button* _btnStepBack;
+   // Fl_Button* _btnPause;
+   // Fl_Button* _btnStepForward;
+   // Fl_Button* _btnNewRun;
 
    // member data
    bool _validFile; 

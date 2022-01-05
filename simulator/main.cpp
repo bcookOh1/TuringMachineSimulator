@@ -12,7 +12,7 @@
 
 // the main, intantiate a MainWind, show and run it
 int main(int argc, char **argv) {
-   MainWind mainWind(578, 570, "Turing Machine Simulator");
+   MainWind mainWind(578, 620, "Turing Machine Simulator"); // add 50 to height // old 570
    mainWind.show();
    return (Fl::run());
 } // end main 

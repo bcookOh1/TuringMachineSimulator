@@ -26,7 +26,6 @@ MainWind::MainWind(int w, int h, const char* title) :
    
    this->callback(MainWindOnCloseCB);
 
-
    _tm = nullptr;
    _validFile = false;
    _validInputString = false;
@@ -77,8 +76,6 @@ void MainWind::MainWindOnCloseCB(Fl_Widget *wind, void *data) {
 // a fuction to do the intial setup on the GUI elements 
 void MainWind::SetupControls(int w, int h) {
 
-   _grpTuringTape = new GroupTuringTape(25, 175); 
-
    _outFilename = new Fl_Output(25, 25, 490, 25, "input file ");
    _outFilename->align(Fl_Align(FL_ALIGN_TOP_LEFT));
    _outFilename->value("none selected");
@@ -87,14 +84,10 @@ void MainWind::SetupControls(int w, int h) {
    _btnFileDialog->labelsize(20);
    _btnFileDialog->callback(ShowDefinitionFileDialogCB, this);
 
-   _bwrComputation = new Fl_Browser(25, 330, 490, 180, "definition and computations"); 
-   _bwrComputation->textfont(4);
-   _bwrComputation->align(Fl_Align(FL_ALIGN_TOP_LEFT));
-
-   _btnSaveComputation = new Fl_Button(525, 330, 35, 35, "@filesave");
-   _btnSaveComputation->labelsize(20);
-   _btnSaveComputation->callback(ShowSaveComputationFileDialogCB, this);
-
+   _lbSeq1 = new Fl_Box(560, 20,  15,  15, "1");
+   _lbSeq1->labelsize(14);
+   _lbSeq1->labelcolor(FL_RED);
+ 
    _outDescription = new Fl_Output(25, 75, 250, 25, "description ");
    _outDescription->align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
@@ -102,46 +95,60 @@ void MainWind::SetupControls(int w, int h) {
    _inString->align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
    _btnLoadString = new Fl_Button(525, 75, 35, 25, "set");
-   // _btnLoadString->labelsize(20);
    _btnLoadString->callback(UserInputStringCB, this);
    _btnLoadString->shortcut(FL_CTRL | 'b');
 
+   _lbSeq2 = new Fl_Box(560, 71,  15,  15, "2");
+   _lbSeq2->labelsize(14);
+   _lbSeq2->labelcolor(FL_RED);
+ 
    _lbExample = new Fl_Box(363, 59, 180, 15, "ex: ");
    _lbExample->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
    _lbExample->hide();
 
-   _icSpeed = new Fl_Input_Choice(25, 133, 100, 25, "run speed");
-   _icSpeed->align(Fl_Align(FL_ALIGN_TOP_LEFT));
+   // _icSpeed = new Fl_Input_Choice(25, 133, 100, 25, "run speed");
+   // _icSpeed->align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
-   // fill the choice selector from the Rates map and a lambda function 
-   std::for_each(Rates.begin(), Rates.end(), [&](RatePair n) 
-                                { _icSpeed->add(n.first.c_str()); });
-   _icSpeed->value("medium");
+   // // fill the choice selector from the Rates map and a lambda function 
+   // std::for_each(Rates.begin(), Rates.end(), [&](RatePair n) 
+   //                              { _icSpeed->add(n.first.c_str()); });
+   // _icSpeed->value("medium");
 
-   _btnRun = new Fl_Light_Button(140, 133, 80, 25, "run");
-   _btnRun->callback(RunButtonCB, this);
+   // _btnRun = new Fl_Light_Button(140, 133, 80, 25, "run");
+   // _btnRun->callback(RunButtonCB, this);
 
-   _lbRunState = new Fl_Box(245, 125, 315, 40, "ACCEPTED");
+   _lbRunState = new Fl_Box(331, 127, 228, 40, "ACCEPTED");
    _lbRunState->box(FL_THIN_UP_BOX);
    _lbRunState->labelfont(FL_BOLD + FL_ITALIC);
-   _lbRunState->labelsize(20);
+   _lbRunState->labelsize(18);
    SetRunStatusBox(RunState::Off);
 
-   _outStatus = new Fl_Output(5, 535, 560, 25, "status");
-   _outStatus->align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
-   _lbSeq1 = new Fl_Box(560, 20,  15,  15, "1");
-   _lbSeq1->labelsize(14);
-   _lbSeq1->labelcolor(FL_RED);
-   _lbSeq2 = new Fl_Box(560, 71,  15,  15, "2");
-   _lbSeq2->labelsize(14);
-   _lbSeq2->labelcolor(FL_RED);
-   _lbSeq3 = new Fl_Box(220, 133, 15,  15, "3");
+//////////////////// 01/04/2022
+
+   _grpRunControls = new GroupRunControls(25,120);
+   _grpRunControls->SetMainWnd(this);
+
+   _lbSeq3 = new Fl_Box(315, 115, 15,  15, "3");
    _lbSeq3->labelsize(14);
    _lbSeq3->labelcolor(FL_RED);
-   _lbSeq4 = new Fl_Box(560, 330, 15, 15, "4");
+
+   _grpTuringTape = new GroupTuringTape(25, 183);  
+
+   _bwrComputation = new Fl_Browser(25, 340, 490, 220, "definition and computations");  
+   _bwrComputation->textfont(4);
+   _bwrComputation->align(Fl_Align(FL_ALIGN_TOP_LEFT));
+
+   _btnSaveComputation = new Fl_Button(525, 340, 35, 35, "@filesave");  
+   _btnSaveComputation->labelsize(20);
+   _btnSaveComputation->callback(ShowSaveComputationFileDialogCB, this);
+
+   _lbSeq4 = new Fl_Box(560, 340, 15, 15, "4");  
    _lbSeq4->labelsize(14);
    _lbSeq4->labelcolor(FL_RED);
+
+   _outStatus = new Fl_Output(5, 585, 560, 25, "status"); 
+   _outStatus->align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
    end(); // fltk call, ends additions to gui tree
 
@@ -413,8 +420,8 @@ void MainWind::RunTimerCB(void *data) {
       // complete on empty transition but no final states in tm 
       case TmStatus::CompleteOnEmptyTransition:
 
-         mainwind->_btnRun->value(0);
-         RunButtonCB(mainwind->_btnRun, data);
+         // mainwind->_btnRun->value(0);
+         // RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
          mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
@@ -426,8 +433,8 @@ void MainWind::RunTimerCB(void *data) {
       // only if there are final states 
       case TmStatus::AcceptedOnFinalState:
 
-         mainwind->_btnRun->value(0);
-         RunButtonCB(mainwind->_btnRun, data);
+         // mainwind->_btnRun->value(0);
+         // RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
          mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
@@ -438,8 +445,8 @@ void MainWind::RunTimerCB(void *data) {
 
       case TmStatus::RejectedNotOnFinalState:
 
-         mainwind->_btnRun->value(0);
-         RunButtonCB(mainwind->_btnRun, data);
+         // mainwind->_btnRun->value(0);
+         // RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
          mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
@@ -451,8 +458,8 @@ void MainWind::RunTimerCB(void *data) {
       // only if two_way and left on #
       case TmStatus::InvalidLeftMove:
 
-         mainwind->_btnRun->value(0);
-         RunButtonCB(mainwind->_btnRun, data);
+         // mainwind->_btnRun->value(0);
+         // RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
          mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
@@ -464,8 +471,8 @@ void MainWind::RunTimerCB(void *data) {
       // added to be complete but should not happen
       case TmStatus::InvalidRightMove:
 
-         mainwind->_btnRun->value(0);
-         RunButtonCB(mainwind->_btnRun, data);
+         // mainwind->_btnRun->value(0);
+         // RunButtonCB(mainwind->_btnRun, data);
 
          // write result to GUI
          mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
@@ -482,8 +489,8 @@ void MainWind::RunTimerCB(void *data) {
    }
    else {
 
-      mainwind->_btnRun->value(0);
-      RunButtonCB(mainwind->_btnRun, data);
+      // mainwind->_btnRun->value(0);
+      // RunButtonCB(mainwind->_btnRun, data);
       mainwind->SetStatus(RunState::SomethingWentWrong);
 
    } // end if 
@@ -543,7 +550,7 @@ void MainWind::SetControlEnables() {
    _inString->deactivate();
    _btnLoadString->deactivate();
    _lbExample->deactivate();
-   _btnRun->deactivate();
+   // _btnRun->deactivate();
 
    if(_validFile == true) {
       _inString->activate();
@@ -552,8 +559,8 @@ void MainWind::SetControlEnables() {
    } // end if 
    
    if(_validFile == true && _validInputString == true) {
-      _icSpeed->activate();
-      _btnRun->activate();
+      // _icSpeed->activate();
+      // _btnRun->activate();
    } // end if 
 
    if(_running == true) {
@@ -561,11 +568,11 @@ void MainWind::SetControlEnables() {
       _inString->deactivate();
       _btnLoadString->deactivate();
       _lbExample->deactivate();
-      _icSpeed->deactivate();
+      // _icSpeed->deactivate();
    }
    else {
       _btnFileDialog->activate();
-      _icSpeed->activate();
+      // _icSpeed->activate();
    } // end if 
 
    if(_bwrComputation->size() > 0 && _running == false) {
@@ -584,7 +591,7 @@ void MainWind::SetControlEnables() {
 // return seconds sequencer rate
 float MainWind::GetSequencerRunRate() {
    float ret = 0.0f;
-   std::string rateString = _icSpeed->value();
+   std::string rateString = _grpRunControls->GetSpeedString();
 
    auto iter = Rates.find(rateString);
    if(iter != Rates.end()){
@@ -709,6 +716,12 @@ void MainWind::SetRunStatusBox(RunState rs) {
                          RunState::Running)].c_str());
       _lbRunState->show();
       break;
+   case RunState::Paused:
+      _lbRunState->color(FL_BACKGROUND_COLOR);
+      _lbRunState->label(RunStateText[static_cast<int>(
+                         RunState::Paused)].c_str());
+      _lbRunState->show();
+      break;
    case RunState::InvalidLeftMove:
       _lbRunState->color(FL_RED);
       _lbRunState->label(RunStateText[static_cast<int>(
@@ -728,7 +741,7 @@ void MainWind::SetRunStatusBox(RunState rs) {
       _lbRunState->show();
       break;
    case RunState::Off:
-      _lbRunState->hide();
+      //_lbRunState->hide();
       break;
    } // end switch
 
