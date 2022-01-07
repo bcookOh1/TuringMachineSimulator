@@ -207,7 +207,7 @@ int GvToJpeg::ConvertSvgToJpg(const std::string &svgFile, string &jpgFile) {
 
    // magick mogrify -format jpg *.svg
    jpgFile = replace_last_copy(svgFile, SvgFileExtension, JpgFileExtension);
-   string cmd = "magick convert " + svgFile + " " + jpgFile;
+   string cmd = "rsvg-convert.exe " + svgFile + " -o " + jpgFile;
    system(cmd.c_str());
  
    return ret;
