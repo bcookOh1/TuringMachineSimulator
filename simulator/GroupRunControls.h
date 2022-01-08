@@ -16,6 +16,7 @@
 #include <FL\Fl_Pack.H>
 #include <string>
 #include <iostream>
+
 #include "CommonDef.h"
 
 using namespace std;
@@ -48,19 +49,19 @@ public:
    GroupRunControls(int x, int y);
    ~GroupRunControls();
 
-   void SetMainWnd(MainWind *mainwind) {_mainwind = mainwind;}
+   void SetMainWind(MainWind *mainwind);
    void SetControlEnables(RunControlState state, bool atBeginning);
 
    std::string GetSpeedString() {return _icSpeed->value();} 
 
-   void RewindClk() {cout << "rewind\n";}
-   void StepBackClk(){cout << "step back\n";}
-   void PauseClk(){cout << "pause\n";}
-   void StepForwardClk(){cout << "step forward\n";}
-   void RunClk(){cout << "run\n";}
+   void RewindClick(); 
+   void StepBackClick();
+   void PauseClick();
+   void StepForwardClick();
+   void RunClick();
 
 }; // end class
 
 // must come after the class, used in callback lambdas,
 // it's a helper, allowing compact code in the lambdas 
-inline GroupRunControls* ToThis(Fl_Widget *w) {return reinterpret_cast<GroupRunControls*>(w);}
+inline GroupRunControls* ToThis(void *param) {return static_cast<GroupRunControls*>(param);}

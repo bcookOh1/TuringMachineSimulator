@@ -77,8 +77,8 @@ public:
    int Initialize();
    
    int TransitionStep();
-   int GetTapeHeadPosition();   
-   Transition GetCurrentTransition();  
+   int GetTapeHeadPosition();
+   Transition GetCurrentTransition();
 
    std::string GetState();
    std::string GetComputation();

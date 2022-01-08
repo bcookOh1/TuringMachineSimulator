@@ -26,31 +26,32 @@ GroupRunControls::GroupRunControls(int x, int y) :
    _btnRewind->tooltip("rewind");
 
    // ref: https://andreldm.com/2016/04/02/replacing-fltk-callbacks-lambdas.html
-   _btnRewind->callback([](Fl_Widget *w, void *p){ToThis(w)->RewindClk();});
+   _btnRewind->callback([](Fl_Widget *w, void *p){ToThis(p)->RewindClick();}, this);
    next += span;
 
    _btnStepBack = new Fl_Button(next, this->y() + 16, 30, 30, "@<");
    _btnStepBack->labelsize(18);
    _btnStepBack->tooltip("step back");
-   _btnStepBack->callback([](Fl_Widget *w, void *p){ToThis(w)->StepBackClk();});
+   _btnStepBack->callback([](Fl_Widget *w, void *p){ToThis(p)->StepBackClick();}, this);
    next += span;
    
    _btnPause = new Fl_Button(next, this->y() + 16, 30, 30, "@||");
    _btnPause->labelsize(18);
    _btnPause->tooltip("pause");
-   _btnPause->callback([](Fl_Widget *w, void *p){ToThis(w)->PauseClk();});
+   _btnPause->callback([](Fl_Widget *w, void *p){ToThis(p)->PauseClick();}, this);
    next += span;
    
    _btnStepForward = new Fl_Button(next, this->y() + 16, 30, 30, "@>");
    _btnStepForward->labelsize(18);
    _btnStepForward->tooltip("step forward");
-   _btnStepForward->callback([](Fl_Widget *w, void *p){ToThis(w)->StepForwardClk();});
+   _btnStepForward->callback([](Fl_Widget *w, void *p){ToThis(p)->StepForwardClick();}, this);
    next += span;
    
    _btnRun = new Fl_Button(next, this->y() + 16, 30, 30, "@>[]");
    _btnRun->labelsize(18);
    _btnRun->tooltip("run");
-   _btnRun->callback([](Fl_Widget *w, void *p){ToThis(w)->RunClk();});
+   _btnRun->callback([](Fl_Widget *w, void *p){ToThis(p)->RunClick();}, this);
+
    
    end();
 
@@ -78,52 +79,67 @@ GroupRunControls::~GroupRunControls(){
 //        enable rewind
 void GroupRunControls::SetControlEnables(RunControlState state, bool atBeginning){
 
+   _btnRewind->deactivate();
+   _btnStepBack->deactivate();
+   _btnPause->deactivate();
+   _btnStepForward->deactivate();
+   _btnRun->deactivate();
+
    switch(state){
    case RunControlState::NotReady:
-      _btnRewind->deactivate();
-      _btnStepBack->deactivate();
-      _btnPause->deactivate();
-      _btnStepForward->deactivate();
-      _btnRun->deactivate();
       break;
    case RunControlState::Ready:
-      _btnRewind->deactivate();
-      _btnStepBack->deactivate();
-      _btnPause->deactivate();
-      _btnStepForward->deactivate();
-      _btnRun->deactivate();
+      _btnStepForward->activate();
+      _btnRun->activate();
       break;
    case RunControlState::Complete:
-      _btnRewind->deactivate();
-      _btnStepBack->deactivate();
-      _btnPause->deactivate();
-      _btnStepForward->deactivate();
-      _btnRun->deactivate();
+      _btnRewind->activate();
       break;
    case RunControlState::Running:
-      _btnRewind->deactivate();
-      _btnStepBack->deactivate();
       _btnPause->deactivate();
-      _btnStepForward->deactivate();
-      _btnRun->deactivate();
       break;
    case RunControlState::Paused:
-      _btnRewind->deactivate();
-      _btnStepBack->deactivate();
-      _btnPause->deactivate();
-      _btnStepForward->deactivate();
-      _btnRun->deactivate();
+      _btnStepForward->activate();
+      _btnRun->activate();
       if(atBeginning == false){
-         _btnRewind->deactivate();
+         _btnRewind->activate();
          _btnStepBack->deactivate();
-         _btnPause->deactivate();
-         _btnStepForward->deactivate();
-         _btnRun->deactivate();
       } // end if 
       break;
    } // end switch
 
    return;
 } // end SetControlEnables
+
+
+void GroupRunControls::SetMainWind(MainWind *mainwind) {
+   _mainwind = mainwind;
+} // end SetMainWnd
+
+void GroupRunControls::RewindClick() {
+    _mainwind->InitializeTm();
+   return;
+} // end RewindClk
+
+void GroupRunControls::StepBackClick() {
+   _mainwind->StepTm(false); 
+   return;
+} // end StepBackClk
+
+void GroupRunControls::PauseClick() { 
+   _mainwind->PauseButton();
+   return;
+} // end PauseClk
+
+void GroupRunControls::StepForwardClick() {
+    _mainwind->StepTm(); 
+   return;
+} // end StepForwardClk
+
+void GroupRunControls::RunClick() { 
+   _mainwind->RunButton();
+   return;
+} // end RunClk
+
 
 

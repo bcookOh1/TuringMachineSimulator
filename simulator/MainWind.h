@@ -50,11 +50,19 @@ class TuringMachine;
 
 
 class MainWind : public Fl_Double_Window {
-   
-   friend class GroupRunControls;
+public:
+
+   // friend class GroupRunControls;
+
+   MainWind(int w, int h, const char* title);
+   ~MainWind();
+
+   void RunButton();
+   void PauseButton();
+   void StepTm(bool forward = true);
+   void InitializeTm();
 
 private:
-
 
    // fltk gui controls
    GroupTuringTape* _grpTuringTape;
@@ -62,10 +70,8 @@ private:
    Fl_Button* _btnFileDialog;
    Fl_Browser* _bwrComputation;
    Fl_Output* _outDescription;
-   // Fl_Input_Choice* _icSpeed;
    Fl_Input* _inString;
    Fl_Button* _btnLoadString;
-   // Fl_Light_Button* _btnRun;
    Fl_Output* _outStatus;
    Fl_Button* _btnSaveComputation;
    Fl_Box* _lbRunState;
@@ -78,11 +84,6 @@ private:
 
    /////////  01-04-222 
    GroupRunControls* _grpRunControls;
-   // Fl_Button* _btnRewind;
-   // Fl_Button* _btnStepBack;
-   // Fl_Button* _btnPause;
-   // Fl_Button* _btnStepForward;
-   // Fl_Button* _btnNewRun;
 
    // member data
    bool _validFile; 
@@ -99,7 +100,6 @@ private:
 
    // control callbacks
    static void ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param);
-   static void RunButtonCB(Fl_Widget *widget, void *param);
    static void ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param);
    static void UserInputStringCB(Fl_Widget *widget, void *param);
    static void RunTimerCB(void *data);
@@ -127,10 +127,7 @@ private:
    // used in gv file creation
    std::string _gvFullPath;
 
-
-public:
-   MainWind(int w, int h, const char* title);
-   ~MainWind();
+   RunControlState GetControlState();
 
 }; // end class
 
