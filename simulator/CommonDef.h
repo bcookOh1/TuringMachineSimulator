@@ -112,12 +112,11 @@ const RateMap Rates = {{"slow",1.0f},{"medium",0.5f},{"fast",0.25f},{"turbo",0.1
 // enum for TuringMachine class
 enum class TmStatus : int {
    Uninitialized,
-   Initialized,
+   Ready,
    InProgress,
-   UserCanceled,
-   CompleteOnEmptyTransition,
+   HaltOnNoTransition,
    AcceptedOnFinalState,
-   RejectedNotOnFinalState,
+   HaltOnNonFinalState,
    InvalidLeftMove,
    InvalidRightMove,
    SomethingWentWrong
@@ -130,28 +129,13 @@ enum class TmConfiguration : int {
 }; // end enum
 
 
-// enum for GUI run State box 
-enum class RunState : int {
-   Off,
-   CompleteOnEmptyTransition,
-   AcceptedOnFinalState,
-   RejectedNotOnFinalState,
-   Canceled,
-   Running,
-   Paused,
-   InvalidLeftMove,
-   InvalidRightMove,
-   SomethingWentWrong
-}; // end enum
-
-// text for the Run State Label this matches the RunState enum
-const StringVector RunStateText = {"Off" ,
+// text for the Run State Label this matches the TmStatus enum
+const StringVector RunStateText = {"Uninitialized" ,
+                                   "Ready",
+                                   "InProgress",
                                    "HaltOnNoTransition",
                                    "AcceptedOnFinalState",
-                                   "RejectedNotOnFinalState",
-                                   "UserCanceled",
-                                   "Running",
-                                   "Paused",
+                                   "HaltOnNonFinalState",
                                    "InvalidLeftMove",
                                    "InvalidRightMove",
                                    "SomethingWentWrong"};

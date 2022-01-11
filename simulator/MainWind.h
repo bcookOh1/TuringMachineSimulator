@@ -59,7 +59,8 @@ public:
 
    void RunButton();
    void PauseButton();
-   void StepTm(bool forward = true);
+   void StepForward();
+   void StepBackward();
    void InitializeTm();
 
 private:
@@ -102,8 +103,8 @@ private:
    static void ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param);
    static void ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param);
    static void UserInputStringCB(Fl_Widget *widget, void *param);
-   static void RunTimerCB(void *data);
    static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
+   static void RunTimerCB(void *data);
 
    std::string GetDefinitionfile();
    void SetDefinitionfile(const std::string &filename);
@@ -119,10 +120,10 @@ private:
 
    void SetControlEnables();
    float GetSequencerRunRate();
-   void SetRunStatusBox(RunState rs);
+   void SetRunStatusBox(TmStatus rs);
 
    int SetupGUITape(TmConfiguration configuration);
-   void SetStatus(RunState rs);
+   void SetStatus(TmStatus rs);
 
    // used in gv file creation
    std::string _gvFullPath;

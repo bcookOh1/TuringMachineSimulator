@@ -26,6 +26,8 @@ GroupRunControls::GroupRunControls(int x, int y) :
    _btnRewind->tooltip("rewind");
 
    // ref: https://andreldm.com/2016/04/02/replacing-fltk-callbacks-lambdas.html
+   // this callback/lambda is different from ref, it's the widget callback 
+   // with 'p' as the param set to 'this' at the end of the callback() function 
    _btnRewind->callback([](Fl_Widget *w, void *p){ToThis(p)->RewindClick();}, this);
    next += span;
 
@@ -51,8 +53,7 @@ GroupRunControls::GroupRunControls(int x, int y) :
    _btnRun->labelsize(18);
    _btnRun->tooltip("run");
    _btnRun->callback([](Fl_Widget *w, void *p){ToThis(p)->RunClick();}, this);
-
-   
+  
    end();
 
 } // end ctor 
@@ -122,7 +123,7 @@ void GroupRunControls::RewindClick() {
 } // end RewindClk
 
 void GroupRunControls::StepBackClick() {
-   _mainwind->StepTm(false); 
+   _mainwind->StepBackward(); 
    return;
 } // end StepBackClk
 
@@ -132,7 +133,7 @@ void GroupRunControls::PauseClick() {
 } // end PauseClk
 
 void GroupRunControls::StepForwardClick() {
-    _mainwind->StepTm(); 
+    _mainwind->StepForward(); 
    return;
 } // end StepForwardClk
 

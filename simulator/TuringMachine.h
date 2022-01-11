@@ -11,7 +11,7 @@
 // transitions and doing the look up very simple. The tape itself
 // is a standard template library list (doubly linked list) so it 
 // can expand left or right as needed. TransitionStep() is the main 
-// function the "steps" the simulator.   
+// function that "steps" the simulator.   
 // note: see the .cpp implementation for function comments
 
 

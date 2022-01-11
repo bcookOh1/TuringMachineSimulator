@@ -119,7 +119,7 @@ int TuringMachine::Initialize() {
    td = std::make_tuple(symbol, index);
    _tape.push_back(td);
 
-   _status = TmStatus::Initialized;
+   _status = TmStatus::Ready;
 
    return 0;
 } // end Initialize
@@ -263,7 +263,7 @@ int TuringMachine::MoveHeadLeft() {
 // TmStatus::InProgress, valid next transition
 // TmStatus::CompleteOnEmptyTransition, no final states
 // TmStatus::AcceptedOnFinalState, if there are final states
-// TmStatus::RejectedNotOnFinalState, if there are final states
+// TmStatus::HaltOnNonFinalState, if there are final states
 // TmStatus::InvalidLeftMove, standard left on position 0 or two-way left on #
 // TmStatus::SomethingWentWrong, should not happen, but ?
 int TuringMachine::TransitionStep() {
@@ -329,17 +329,17 @@ int TuringMachine::TransitionStep() {
          _currentState = nextState;
       } 
       else {
-         _status = TmStatus::CompleteOnEmptyTransition;
+         _status = TmStatus::HaltOnNoTransition;
       } // end if  // from column not found
 
    }
    else {
-      _status = TmStatus::CompleteOnEmptyTransition;
+      _status = TmStatus::HaltOnNoTransition;
    } // end if // from row not found
 
 
    // test if the next state is in _finalStates
-   if(TmStatus::CompleteOnEmptyTransition == _status) {
+   if(TmStatus::HaltOnNoTransition == _status) {
 
       // test if in final state 
       if(_finalStates.size() > 0) {
@@ -348,7 +348,7 @@ int TuringMachine::TransitionStep() {
             _status = TmStatus::AcceptedOnFinalState;  // halt on entering final state  
          } 
          else {
-            _status = TmStatus::RejectedNotOnFinalState; // halt but not on final state   
+            _status = TmStatus::HaltOnNonFinalState; // halt but not on final state   
          } // end if
       } // end if 
        
@@ -363,7 +363,7 @@ int TuringMachine::TransitionStep() {
          if(IsStateFinal(_currentState) == true) {
             _status = TmStatus::AcceptedOnFinalState;  // halt on entering final state  
          } else {
-            _status = TmStatus::RejectedNotOnFinalState; // halt but not on final state   
+            _status = TmStatus::HaltOnNonFinalState; // halt but not on final state   
          } // end if
       } // end if 
 

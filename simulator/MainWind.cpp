@@ -109,10 +109,10 @@ void MainWind::SetupControls(int w, int h) {
    _lbRunState->box(FL_THIN_UP_BOX);
    _lbRunState->labelfont(FL_BOLD + FL_ITALIC);
    _lbRunState->labelsize(18);
-   SetRunStatusBox(RunState::Off);
+   SetRunStatusBox(TmStatus::Uninitialized);
  
    _grpRunControls = new GroupRunControls(25,120);
-   _grpRunControls->SetMainWnd(this);
+   _grpRunControls->SetMainWind(this);
 
    _lbSeq3 = new Fl_Box(315, 115, 15,  15, "3");
    _lbSeq3->labelsize(14);
@@ -154,7 +154,7 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
    std::string desktop = GetDesktopPath();
 
    // hide the status box 
-   mainwind->SetRunStatusBox(RunState::Off);
+   mainwind->SetRunStatusBox(TmStatus::Uninitialized);
 
    Fl_File_Chooser chooser(desktop.c_str(), "*.tm", 
                            Fl_File_Chooser::SINGLE, "Turing Machine");
@@ -188,16 +188,17 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
 
       mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
 
-      // if child is closed, open it
-      if(mainwind->_child == nullptr) {
-         mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
-      }
-      else {
-         // if child was closed, reopen
-         if(mainwind->_child->running() == false){
-            mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
-         } // end uf 
-      } // end if 
+      // 01-09-2022, uncomment after completing the new sequencing 
+      // // if child is closed, open it
+      // if(mainwind->_child == nullptr) {
+      //    mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
+      // }
+      // else {
+      //    // if child was closed, reopen
+      //    if(mainwind->_child->running() == false){
+      //       mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
+      //    } // end uf 
+      // } // end if 
       
       // push the new gv file cmd and the full path to the child (ipcq reader)
       int result = mainwind->_ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::GvFile),mainwind->_gvFullPath);
@@ -218,8 +219,8 @@ void MainWind::RunButton() {
    
    // set status and start the timer 
    _running = true;
-   SetRunStatusBox(RunState::Running);
-   _outStatus->value(RunStateText[static_cast<int>(RunState::Running)].c_str());
+   SetRunStatusBox(TmStatus::InProgress);
+   _outStatus->value(RunStateText[static_cast<int>(TmStatus::InProgress)].c_str());
 
    // add the definition to the computation
    StringVector definition = _tm->GetDefinition();
@@ -237,15 +238,15 @@ void MainWind::RunButton() {
 void MainWind::PauseButton() {
 
    _running = false;
-   SetRunStatusBox(RunState::Paused);
-   _outStatus->value(RunStateText[static_cast<int>(RunState::Paused)].c_str());
+   SetRunStatusBox(TmStatus::InProgress);
+   _outStatus->value(RunStateText[static_cast<int>(TmStatus::InProgress)].c_str());
    Fl::remove_timeout(RunTimerCB, this);
 
    return;
 } // end PauseButton
 
 
-void MainWind::StepTm(bool forward){
+void MainWind::StepForward(){
 
    TmStatus status = TmStatus::InProgress;
 
@@ -258,7 +259,7 @@ void MainWind::StepTm(bool forward){
    // TmStatus::InProgress, valid next transition
    // TmStatus::CompleteOnEmptyTransition, no final states
    // TmStatus::AcceptedOnFinalState, if there are final states
-   // TmStatus::RejectedNotOnFinalState, if there are final states
+   // TmStatus::HaltOnNonFinalState, if there are final states
    // TmStatus::Abnormal_Termination, two - way left on #
    // TmStatus::SomethingWentWrong, should not happen, but ?
    int ret = _tm->TransitionStep();
@@ -281,76 +282,41 @@ void MainWind::StepTm(bool forward){
          Fl::repeat_timeout(_runRate, RunTimerCB, this);
       
          break;
-
       // complete on empty transition but no final states in tm 
-      case TmStatus::CompleteOnEmptyTransition:
-
-         // write result to GUI
-         _bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                              RunState::CompleteOnEmptyTransition)].c_str());
-         SetStatus(RunState::CompleteOnEmptyTransition);
-
-         break;
-
-      // only if there are final states 
+      case TmStatus::HaltOnNoTransition:
       case TmStatus::AcceptedOnFinalState:
-
-         // write result to GUI
-         _bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                              RunState::AcceptedOnFinalState)].c_str());
-         SetStatus(RunState::AcceptedOnFinalState);
-
-         break;
-
-      case TmStatus::RejectedNotOnFinalState:
-
-         // write result to GUI
-         _bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                              RunState::RejectedNotOnFinalState)].c_str());
-         SetStatus(RunState::RejectedNotOnFinalState);
-
-         break;
-
-      // only if two_way and left on #
+      case TmStatus::HaltOnNonFinalState:
       case TmStatus::InvalidLeftMove:
-
-         // write result to GUI
-         _bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                              RunState::InvalidLeftMove)].c_str());
-         SetStatus(RunState::InvalidLeftMove);
-
-         break;
-
-      // added to be complete but should not happen
       case TmStatus::InvalidRightMove:
+      case TmStatus::SomethingWentWrong:
 
          // write result to GUI
-         _bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                              RunState::InvalidRightMove)].c_str());
-         SetStatus(RunState::InvalidRightMove);
+         _bwrComputation->add(RunStateText[static_cast<std::size_t>(status)].c_str());
+         SetStatus(status);
 
          break;
-
       // should not happen 
       default: 
          break;
       } // end switch 
-
    }
    else {
-
-      SetStatus(RunState::SomethingWentWrong);
-
+      SetStatus(TmStatus::SomethingWentWrong);
    } // end if 
 
    return;
-} // end StepTm
+} // end StepForward
+
+void MainWind::StepBackward(){
+
+   return;
+} // end StepBackward
 
 
 void MainWind::InitializeTm(){
 
-   // if the TM is not initialized like after a run then initialize
-   if(_tm->GetTmStatus() != TmStatus::Initialized) {
+   // if the TM is not ready like after a run then initialize
+   if(_tm->GetTmStatus() != TmStatus::Ready) {
       _tm->Initialize();
       _grpTuringTape->SetTapeToB();
       SetupGUITape(_tm->GetConfigurationType());
@@ -484,7 +450,7 @@ void MainWind::RunTimerCB(void *data) {
    // TmStatus::InProgress, valid next transition
    // TmStatus::CompleteOnEmptyTransition, no final states
    // TmStatus::AcceptedOnFinalState, if there are final states
-   // TmStatus::RejectedNotOnFinalState, if there are final states
+   // TmStatus::HaltOnNonFinalState, if there are final states
    // TmStatus::Abnormal_Termination, two - way left on #
    // TmStatus::SomethingWentWrong, should not happen, but ?
    int ret = mainwind->_tm->TransitionStep();
@@ -509,66 +475,15 @@ void MainWind::RunTimerCB(void *data) {
          break;
 
       // complete on empty transition but no final states in tm 
-      case TmStatus::CompleteOnEmptyTransition:
-
-         // mainwind->_btnRun->value(0);
-         // RunButtonCB(mainwind->_btnRun, data);
-
-         // write result to GUI
-         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                                       RunState::CompleteOnEmptyTransition)].c_str());
-         mainwind->SetStatus(RunState::CompleteOnEmptyTransition);
-
-         break;
-
-      // only if there are final states 
+      case TmStatus::HaltOnNoTransition:
       case TmStatus::AcceptedOnFinalState:
-
-         // mainwind->_btnRun->value(0);
-         // RunButtonCB(mainwind->_btnRun, data);
-
-         // write result to GUI
-         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                                       RunState::AcceptedOnFinalState)].c_str());
-         mainwind->SetStatus(RunState::AcceptedOnFinalState);
-
-         break;
-
-      case TmStatus::RejectedNotOnFinalState:
-
-         // mainwind->_btnRun->value(0);
-         // RunButtonCB(mainwind->_btnRun, data);
-
-         // write result to GUI
-         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                                       RunState::RejectedNotOnFinalState)].c_str());
-         mainwind->SetStatus(RunState::RejectedNotOnFinalState);
-
-         break;
-
-      // only if two_way and left on #
+      case TmStatus::HaltOnNonFinalState:
       case TmStatus::InvalidLeftMove:
-
-         // mainwind->_btnRun->value(0);
-         // RunButtonCB(mainwind->_btnRun, data);
-
-         // write result to GUI
-         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                                      RunState::InvalidLeftMove)].c_str());
-         mainwind->SetStatus(RunState::InvalidLeftMove);
-
-         break;
-
-      // added to be complete but should not happen
       case TmStatus::InvalidRightMove:
 
-         // mainwind->_btnRun->value(0);
-         // RunButtonCB(mainwind->_btnRun, data);
-
          // write result to GUI
-         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(
-                                      RunState::InvalidRightMove)].c_str());
-         mainwind->SetStatus(RunState::InvalidRightMove);
+         mainwind->_bwrComputation->add(RunStateText[static_cast<std::size_t>(status)].c_str());
+         mainwind->SetStatus(status);
 
          break;
 
@@ -579,11 +494,7 @@ void MainWind::RunTimerCB(void *data) {
 
    }
    else {
-
-      // mainwind->_btnRun->value(0);
-      // RunButtonCB(mainwind->_btnRun, data);
-      mainwind->SetStatus(RunState::SomethingWentWrong);
-
+      mainwind->SetStatus(status);
    } // end if 
 
    return;
@@ -792,78 +703,50 @@ int MainWind::WriteComputationToFile(const std::string &filename) {
 } // end WriteComputationToFile
 
 
-// SetRunStatusBox, use the GUI side RunState and set 
+// SetRunStatusBox, use the GUI side TmStatus and set 
 // the run state box widget label and color 
-void MainWind::SetRunStatusBox(RunState rs) {
+void MainWind::SetRunStatusBox(TmStatus rs) {
 
    switch(rs) {
-      case RunState::CompleteOnEmptyTransition:
+   case TmStatus::HaltOnNoTransition:
       _lbRunState->color(FL_GREEN);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::CompleteOnEmptyTransition)].c_str());
-      _lbRunState->show();
       break;
-      case RunState::AcceptedOnFinalState:
+   case TmStatus::AcceptedOnFinalState:
       _lbRunState->color(FL_GREEN);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::AcceptedOnFinalState)].c_str());
-      _lbRunState->show();
       break;
-   case RunState::RejectedNotOnFinalState:
+   case TmStatus::HaltOnNonFinalState:
       _lbRunState->color(FL_RED);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::RejectedNotOnFinalState)].c_str());
-      _lbRunState->show();
       break;
-   case RunState::Canceled:
-      _lbRunState->color(FL_CYAN);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::Canceled)].c_str());
-      _lbRunState->show();
-      break;
-   case RunState::Running:
+   case TmStatus::Ready:
       _lbRunState->color(FL_BACKGROUND_COLOR);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::Running)].c_str());
-      _lbRunState->show();
       break;
-   case RunState::Paused:
+   case TmStatus::InProgress:
       _lbRunState->color(FL_BACKGROUND_COLOR);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::Paused)].c_str());
-      _lbRunState->show();
       break;
-   case RunState::InvalidLeftMove:
+   case TmStatus::InvalidLeftMove:
       _lbRunState->color(FL_RED);
-      _lbRunState->label(RunStateText[static_cast<int>(
-      RunState::InvalidLeftMove)].c_str());
-      _lbRunState->show();
-   break;
-   case RunState::InvalidRightMove:
-      _lbRunState->color(FL_RED);
-      _lbRunState->label(RunStateText[static_cast<int>(
-      RunState::InvalidRightMove)].c_str());
-      _lbRunState->show();
-   break;
-   case RunState::SomethingWentWrong:
-      _lbRunState->color(FL_RED);
-      _lbRunState->label(RunStateText[static_cast<int>(
-                         RunState::SomethingWentWrong)].c_str());
-      _lbRunState->show();
       break;
-   case RunState::Off:
-      //_lbRunState->hide();
+   case TmStatus::InvalidRightMove:
+      _lbRunState->color(FL_RED);
+      break;
+   case TmStatus::SomethingWentWrong:
+      _lbRunState->color(FL_RED);
+      break;
+   case TmStatus::Uninitialized:
       break;
    } // end switch
+
+   _lbRunState->label(RunStateText[static_cast<int>(rs)].c_str());
+   _lbRunState->show();
 
    return;
 } // end SetRunStatusBox
 
 
-void MainWind::SetStatus(RunState rs) {
+void MainWind::SetStatus(TmStatus rs) {
 
    SetRunStatusBox(rs);
-   if(rs != RunState::Off)
+   if(rs != TmStatus::Uninitialized)
       _outStatus->value(RunStateText[static_cast<int>(rs)].c_str());
 
    return;
