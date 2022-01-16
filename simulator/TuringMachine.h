@@ -23,6 +23,7 @@
 #include <vector>
 #include <set>
 #include <list>
+#include <stack>
 #include <tuple>
 
 
@@ -54,10 +55,14 @@ private:
    StringVector _headerRow;
    StringVector _definition;
    TmTransitionTable _transitionTable;
-
-   // used in GetFirst() GetNext() functions
-   TapeIter _tapeIter;
    TmConfiguration _configurationType;
+
+   // used in GetFirst() GetNext() functions used 
+   // in mainwind tapesetup only 
+   TapeIter _tapeIter;
+
+   // 01-14-2022
+   std::stack<Transition> _history;
 
    bool IsStateFinal(std::string state);
    int MoveHeadRight();
@@ -122,6 +127,14 @@ public:
 
    // make a graphviz doc file 
    int WriteGraphvizDotFile(std::string tmFilename, std::string &gvFullPath);
+
+   // 01-14-2022
+   int GetHistorySize() {return static_cast<int>(_history.size());}
+   int StepBack(Transition &transition);
+
+   void PrintHeadPosition() {
+      std::cout << "head position: (" << std::get<0>(*_headPositionIter) << ", " << std::get<1>(*_headPositionIter) << ")\n";
+   } // PrintHeadPosition
 
 }; // end TuringMachine
 

@@ -87,10 +87,15 @@ private:
    GroupRunControls* _grpRunControls;
 
    // member data
+
+   // flags to set the user control group 
    bool _validFile; 
    bool _validInputString;
+   RunControlState _runState;
    bool _running;
+   bool _paused;
    bool _complete;
+
    float _runRate;
    std::string _partialfname;
    std::string _definitionfile;

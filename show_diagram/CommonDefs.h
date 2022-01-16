@@ -20,7 +20,7 @@ const string RelativeImgFolder = "./img";
 // searching or replacing 
 const string GvFileExtension = ".gv";
 const string SvgFileExtension = ".svg";
-const string JpgFileExtension = ".jpg";
+const string ImgFileExtension = ".png";
 
 enum class IpcqCmd : unsigned int {
    Close = 0,
@@ -46,7 +46,7 @@ inline std::tuple<int,int> BoxDimsFromWind(int w, int h){
    return ret;
 } // end BoxDimsFromWind
 
-inline std::tuple<int,int> WindDimsFromJpg(int w, int h){
+inline std::tuple<int,int> WindDimsFromImage(int w, int h){
    std::tuple<int,int> ret{std::make_tuple(w+(2 * Inside_Border),h+(2 * Inside_Border))}; 
    return ret;
-} // end WindDimsFromJpg
+} // end WindDimsFromImage

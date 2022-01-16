@@ -96,6 +96,7 @@ int TuringMachine::SetConfiguration(std::string configuration) {
 int TuringMachine::Initialize() {
 
    _tape.clear();
+   while(_history.size()) _history.pop();
    
    std::string symbol = TAPE_BLANK_SYMBOL;
    int index = 0;
@@ -278,12 +279,16 @@ int TuringMachine::TransitionStep() {
    } // end if 
 
    // get the tape symbol
-   std::string tapeSymbol;
-   tapeSymbol = std::get<0>(*_headPositionIter);
+   std::string tapeSymbol = std::get<0>(*_headPositionIter);
+   int tapeIndex = std::get<1>(*_headPositionIter);
+
+   // save to history
+   Transition transitionHistory{_currentState, tapeSymbol, _currentDirection, tapeIndex};
+   _history.push(transitionHistory);
  
    // check if a transition exists for the state (row)
    // this should always work so use an assert on fail
-   // since there is structural problem with the table 
+   // since there is structural problem with the table  
    auto rowIter = _transitionTable.find(_currentState);
    if(rowIter != _transitionTable.end()) {
 
@@ -614,5 +619,48 @@ int TuringMachine::WriteGraphvizDotFile(std::string tmFilename, std::string &gvF
 
    return ret;
 } // end WriteGraphvizDotFile
+
+// ret 0 success
+// ret -1 failed
+int TuringMachine::StepBack(Transition &transition){
+   int ret = 0;
+   int result = 0;
+
+   // limit check 
+   if(GetHistorySize() == 0) return -1;
+
+   transition = _history.top();
+   _history.pop();
+
+   std::string dir = transition.GetDirection();
+   int index = transition.GetIndex();
+   std::string state = transition.GetState();
+   std::string symbol = transition.GetSymbol();
+
+   // move back (opposite)
+   if(dir == TAPE_LEFT_SYMBOL) {
+      result = MoveHeadRight();
+      if(-1 == result) {
+         _status = TmStatus::InvalidRightMove;
+      } // end if 
+   }
+   else {
+      result = MoveHeadLeft();
+      if(-1 == result) {
+         _status = TmStatus::InvalidLeftMove;
+      } // end if 
+   } // end if 
+
+   std::get<0>(*_headPositionIter) = symbol;
+   std::get<1>(*_headPositionIter) = index;
+
+   _currentState = state;
+   transition.ReverseDirection();
+   std::cout << "StepBack: " << transition.toStr() << ", ";
+   PrintHeadPosition();
+
+   return ret;
+} // end StepBack
+
 
 

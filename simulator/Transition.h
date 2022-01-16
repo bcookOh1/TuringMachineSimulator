@@ -17,6 +17,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "CommonDef.h"
 
 
 class Transition {
@@ -48,6 +49,7 @@ public:
    std::string GetSymbol() {return _symbol;}
    std::string GetDirection() {return _stepDirection;}
    int GetIndex() { return _index; }
+   void ReverseDirection() { _stepDirection = (_stepDirection == TAPE_RIGHT_SYMBOL ? TAPE_LEFT_SYMBOL : TAPE_RIGHT_SYMBOL); }
 
    // bcook 12-7-2021 debug function 
    std::string toStr() {

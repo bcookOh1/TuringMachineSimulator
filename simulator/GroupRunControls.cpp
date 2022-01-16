@@ -92,19 +92,22 @@ void GroupRunControls::SetControlEnables(RunControlState state, bool atBeginning
    case RunControlState::Ready:
       _btnStepForward->activate();
       _btnRun->activate();
+      if(atBeginning == false){
+         _btnStepBack->activate();
+      } // end if 
       break;
    case RunControlState::Complete:
       _btnRewind->activate();
       break;
    case RunControlState::Running:
-      _btnPause->deactivate();
+      _btnPause->activate();
       break;
    case RunControlState::Paused:
       _btnStepForward->activate();
       _btnRun->activate();
       if(atBeginning == false){
          _btnRewind->activate();
-         _btnStepBack->deactivate();
+         _btnStepBack->activate();
       } // end if 
       break;
    } // end switch
