@@ -4,7 +4,7 @@ BIN := ./bin
 
 # compiler for c++
 CXX := D:/msys64/mingw64/bin/g++.exe
-CPPFLAGS := -Wall -std=c++17 -c -MMD -MP -ID:/sw_libs/c++/fltk-1.4_mingw64 -ID:/sw_libs/c++/boost_1_78_0 \
+CPPFLAGS := -Wall -std=c++20 -c -MMD -MP -ID:/sw_libs/c++/fltk-1.4_mingw64 -ID:/sw_libs/c++/boost_1_78_0 \
 -ID:/sw_libs/c++/ipcq/include
 
 src := $(wildcard *.cpp)
