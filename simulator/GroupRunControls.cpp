@@ -1,11 +1,12 @@
 
 #include "GroupRunControls.h"
-#include "MainWind.h"
 
 
 GroupRunControls::GroupRunControls(int x, int y) : 
    Fl_Group(x, y, _w, _h, Title.c_str()) {
 
+   _clicked = GroupButton::None;
+   
    box(FL_BORDER_BOX);
    align(Fl_Align(FL_ALIGN_TOP_LEFT));
 
@@ -116,32 +117,43 @@ void GroupRunControls::SetControlEnables(RunControlState state, bool atBeginning
 } // end SetControlEnables
 
 
-void GroupRunControls::SetMainWind(MainWind *mainwind) {
-   _mainwind = mainwind;
-} // end SetMainWnd
+void GroupRunControls::DeactivateAll() {
+   SetRewindBtnState(false);
+   SetStepBackBtnState(false);
+   SetPauseBtnState(false);
+   SetStepForwardBtnState(false);
+   SetRunBtnState(false);
+   return;
+} // end DeactivateAll
+
 
 void GroupRunControls::RewindClick() {
-    _mainwind->InitializeTm();
+   _clicked = GroupButton::Rewind;
+   do_callback();
    return;
 } // end RewindClk
 
 void GroupRunControls::StepBackClick() {
-   _mainwind->StepBackward(); 
+   _clicked = GroupButton::StepBack;
+   do_callback();
    return;
 } // end StepBackClk
 
 void GroupRunControls::PauseClick() { 
-   _mainwind->PauseButton();
+   _clicked = GroupButton::Pause;
+   do_callback();
    return;
 } // end PauseClk
 
 void GroupRunControls::StepForwardClick() {
-    _mainwind->StepForward(); 
+   _clicked = GroupButton::StepForward;
+   do_callback();
    return;
 } // end StepForwardClk
 
 void GroupRunControls::RunClick() { 
-   _mainwind->RunButton();
+   _clicked = GroupButton::Run;
+   do_callback();
    return;
 } // end RunClk
 

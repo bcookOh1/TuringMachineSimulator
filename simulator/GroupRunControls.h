@@ -16,23 +16,26 @@
 #include <FL\Fl_Pack.H>
 #include <string>
 #include <iostream>
-
 #include "CommonDef.h"
 
 using namespace std;
 
-class MainWind;
 
 const std::string Title = "run controls";
-
+enum class GroupButton : int {
+   None = 0,
+   Rewind,
+   StepBack,
+   Pause,
+   StepForward,
+   Run
+}; // end enum
 
 // subclass the Fl_Scroll control to allow long 
 // but fixed size tape, simpler then trying to make a 
 // (pseudo) infinite tape by prepending or appending positions   
 class GroupRunControls : public Fl_Group { 
 private:
-
-   MainWind *_mainwind;
 
    static const int _h = 53;
    static const int _w = 290;
@@ -45,12 +48,14 @@ private:
    Fl_Button* _btnStepForward;
    Fl_Button* _btnRun;
 
+   GroupButton _clicked;
+
 public:
    GroupRunControls(int x, int y);
    ~GroupRunControls();
 
-   void SetMainWind(MainWind *mainwind);
    void SetControlEnables(RunControlState state, bool atBeginning);
+   GroupButton GetClickedBtn(){return _clicked; };
 
    std::string GetSpeedString() {return _icSpeed->value();} 
 
@@ -59,6 +64,13 @@ public:
    void PauseClick();
    void StepForwardClick();
    void RunClick();
+
+   void DeactivateAll();
+   void SetRewindBtnState(bool state) { (state == true ? _btnRewind->activate() : _btnRewind->deactivate());}
+   void SetStepBackBtnState(bool state) { (state == true ? _btnStepBack->activate() : _btnStepBack->deactivate());}
+   void SetPauseBtnState(bool state) { (state == true ? _btnPause->activate() : _btnPause->deactivate());}
+   void SetStepForwardBtnState(bool state) { (state == true ? _btnStepForward->activate() : _btnStepForward->deactivate());}
+   void SetRunBtnState(bool state) { (state == true ? _btnRun->activate() : _btnRun->deactivate());}
 
 }; // end class
 

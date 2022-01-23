@@ -30,13 +30,16 @@
 #include <cassert>
 #include <string>
 #include <tuple>
+#include <ipcq.h>
 #include "CommonDef.h"
+// #include "StateMachine.hpp"
 #include "GroupTuringTape.h"
 #include "GroupRunControls.h"
-#include <ipcq.h>
 
 
 namespace bp = boost::process;
+//namespace sml = boost::sml;
+//using Cfsm = tmsim_control_enables;
 
 
 // sets of colors a = lighter
@@ -52,16 +55,23 @@ class TuringMachine;
 class MainWind : public Fl_Double_Window {
 public:
 
-   // friend class GroupRunControls;
-
    MainWind(int w, int h, const char* title);
    ~MainWind();
 
-   void RunButton();
-   void PauseButton();
-   void StepForward();
-   void StepBackward();
-   void InitializeTm();
+   void SetTmSelectBtnState(bool state); 
+   void SetLoadStringBtnState(bool state); 
+   void SetSaveComputationBtnState(bool state); 
+   void DisableAllGrpRunControls();
+   void SetRewindBtnState(bool state); 
+   void SetStepBackBtnState(bool state);
+   void SetPauseBtnState(bool state);
+   void SetStepForwardBtnState(bool state);
+   void SetRunBtnState(bool state);
+   TmStatus GetTmStatus();
+   bool ValidTmFile();
+   bool ValidInputString();
+   int TmStepBackHistorySize();
+
 
 private:
 
@@ -85,6 +95,9 @@ private:
 
    /////////  01-04-222 
    GroupRunControls* _grpRunControls;
+
+   // state machine
+   //sm<Cfsm> *_sm;
 
    // member data
 
@@ -110,6 +123,7 @@ private:
    static void UserInputStringCB(Fl_Widget *widget, void *param);
    static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
    static void RunTimerCB(void *data);
+   static void GroupControlCB(Fl_Widget *widget, void *param);
 
    std::string GetDefinitionfile();
    void SetDefinitionfile(const std::string &filename);
@@ -134,6 +148,14 @@ private:
    std::string _gvFullPath;
 
    RunControlState GetControlState();
+
+   void RunButton();
+   void PauseButton();
+   void StepForward();
+   void StepBackward();
+   void InitializeTm();
+
+
 
 }; // end class
 
