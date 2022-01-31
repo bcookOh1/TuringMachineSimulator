@@ -5,7 +5,7 @@ BIN := ./bin
 # compiler for c++
 CXX := D:/msys64/mingw64/bin/g++.exe
 CPPFLAGS := -fdiagnostics-color=always -fpermissive -Wall -std=c++20 -c -MMD -MP -O2 -ID:/sw_libs/c++/fltk-1.4_mingw64 \
--ID:/sw_libs/c++/boost_1_78_0 -ID:/msys64/mingw64/include/graphviz -ID:/sw_libs/c++/ipcq/include
+-ID:/sw_libs/c++/boost_1_78_0 -ID:/msys64/mingw64/include/graphviz -ID:/sw_libs/c++/ipcq/include 
 
 src := $(wildcard *.cpp)
 obj := $(src:%.cpp=$(BIN)/%.o)
@@ -30,7 +30,7 @@ $(TARGET): $(obj)
 	$(CXX) $^ -o $@ $(LFLAGS) $(LIBS)
 
 # compile step for individual source file 
-# macros in recipe:  $@ -> target, $< -> first prerequicit 
+# macros in recipe:  $@ -> target, $< -> first prerequsite 
 $(BIN)/%.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
