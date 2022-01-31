@@ -1,36 +1,5 @@
 
 
-
-/'
-
-_validFile 
-_validInputString;
-
-enum class RunControlState : int {
-   AtStart = 0,
-   ValidTM,
-   ValidString,
-   Ready,
-   Paused,
-   Running,
-   SingleStep,
-   HaltAccept,
-   HaltFailed
-}; // end enum
-
-enum class TmStatus : int {
-   Uninitialized,         // before valid file and valid input 
-   Ready,                 // awaiting user run or step 
-   InProgress,            // after first step and not halt
-   HaltOnNoTransition,    // halt accept
-   AcceptedOnFinalState,  // halt accept
-   HaltOnNonFinalState,   // halt accept
-   InvalidLeftMove,       // halt failed
-   InvalidRightMove,      // halt failed
-   SomethingWentWrong     // remove and just use switch/case default instead
-}; // end enum
-
-'/
 @startuml GUI Button Enables
 
 
@@ -41,7 +10,7 @@ SetTm : on_entry: \nSelectTmBtn active
 SetString : on_entry: \nSetInputBtn active  
 
 SetString --> Paused : eSetInputBtn [validString]
-Paused --> Running : eRunBtn [inProgress] 
+Paused --> Running : eRunBtn [(ready || inProgress)] 
 Paused : on_entry: \nRunBtn active \nStepForwardBtn active \nSaveComputationBtn active \nif hasHistory then \n  RewindBtn active \n  StepBackwardBtn active 
 
 Paused --> Paused : eStepForwardBtn \n[inProgress]
