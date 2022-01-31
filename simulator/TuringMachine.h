@@ -19,6 +19,7 @@
 
 #include "CommonDef.h"
 #include "Transition.h"
+#include "GraphvizUtil.h"
 #include <string>
 #include <vector>
 #include <set>
@@ -28,6 +29,9 @@
 
 
 class TuringMachine {
+
+   friend int WriteGraphvizDotFile(TuringMachine *tm, std::string tmFilename, std::string &gvFullPath);
+   
 private:
 
    TapeList _tape;
@@ -126,7 +130,7 @@ public:
    bool GetNextTapePosition(TapeData &tapeData);
 
    // make a graphviz doc file 
-   int WriteGraphvizDotFile(std::string tmFilename, std::string &gvFullPath);
+   int WriteGraphvizDotFile(TuringMachine *tm, std::string tmFilename, std::string &gvFullPath);
 
    // 01-14-2022
    int GetHistorySize() {return static_cast<int>(_history.size());}

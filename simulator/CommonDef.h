@@ -20,6 +20,7 @@
 using namespace boost;
 using namespace boost::xpressive;
 
+
 // forwards 
 class Transition;
 
@@ -64,7 +65,7 @@ const sregex Sre_Tape_Symbols = as_xpr("tape_symbols:") >>
 
 const sregex Sre_Alphabet = as_xpr("alphabet:") >>
                             xpressive::optional(" ") >>
-                             as_xpr('{') >> (s1 = +set[alnum|',']) >> as_xpr('}');
+                             as_xpr('{') >> (s1 = +xpressive::set[alnum|',']) >> as_xpr('}');
 
 const sregex Sre_Start_State = as_xpr("start:") >>
                                xpressive::optional(" ") >>
@@ -76,7 +77,7 @@ const sregex Sre_Two_Way_Boundary = as_xpr("two_way_boundary:") >>
 
 const sregex Sre_Final_States = as_xpr("final:") >>
                                 xpressive::optional(" ") >>
-                                as_xpr('{') >> (s1 = +set[alnum | ',']) >> as_xpr('}');
+                                as_xpr('{') >> (s1 = +xpressive::set[alnum | ',']) >> as_xpr('}');
 
 
 // this just says look for delta and return s1 as the remainder of the line 
@@ -147,31 +148,21 @@ enum class IpcqCmd : unsigned int {
    NewState
 }; // end enum
 
+// used to improve readability in a set of bool print values (columns lineup)
+inline std::string t_f(bool b){return (b == true ? "t" : "f"); }
 
-// not ready
-//    all deactive
-// ready
-//    enable forward step
-//    enable run
-// complete
-//    enable rewind
-// running 
-//    enable pause
-// paused
-//    enable single step
-//    enable run
-//    if NOT at beginning
-//        enable back step
-//        enable rewind
-// enum used by MainWind to set control enables in 
-// GroupRunControls class
-enum class RunControlState : int {
-   NotReady = 0,
-   Ready,
-   Complete,
-   Running,
-   Paused
-}; // end enum
+// combine tmstatus with flags for gui-app status for the state machine.
+// The turing machine class only knows its own status and
+// the state machine needs to know how the tm is sequenced so 
+// combined here to pass into the state machine tmsim_control_enables (Cfsm) 
+// as a single struct
+struct AppStatus {
+   TmStatus tm{TmStatus::Uninitialized};
+   bool validTm{false}; 
+   bool validInput{false};
+   bool looping{false};
+   bool complete{false};
+}; // end struct
 
 
 // example file definition file 

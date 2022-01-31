@@ -32,20 +32,23 @@
 #include <tuple>
 #include <ipcq.h>
 #include "CommonDef.h"
-// #include "StateMachine.hpp"
+#include "StateMachine.hpp"
 #include "GroupTuringTape.h"
 #include "GroupRunControls.h"
+#include "GraphvizUtil.h"
+
 
 
 namespace bp = boost::process;
-//namespace sml = boost::sml;
-//using Cfsm = tmsim_control_enables;
+namespace sml = boost::sml;
+using Cfsm = tmsim_control_enables;
 
 
 // sets of colors a = lighter
 const Fl_Color s1a = fl_rgb_color(0xB0, 0xC0, 0xCF);
 const Fl_Color s1b = fl_rgb_color(0x70, 0x90, 0xA0);
 const Fl_Color s1c = fl_rgb_color(0x5F, 0x6F, 0x6F);
+
 
 // forwards 
 class Transition;
@@ -58,25 +61,13 @@ public:
    MainWind(int w, int h, const char* title);
    ~MainWind();
 
-   void SetTmSelectBtnState(bool state); 
-   void SetLoadStringBtnState(bool state); 
-   void SetSaveComputationBtnState(bool state); 
-   void DisableAllGrpRunControls();
-   void SetRewindBtnState(bool state); 
-   void SetStepBackBtnState(bool state);
-   void SetPauseBtnState(bool state);
-   void SetStepForwardBtnState(bool state);
-   void SetRunBtnState(bool state);
-   TmStatus GetTmStatus();
-   bool ValidTmFile();
-   bool ValidInputString();
-   int TmStepBackHistorySize();
-
-
 private:
 
-   // fltk gui controls
+   // fltk custom controls 
    GroupTuringTape* _grpTuringTape;
+   GroupRunControls* _grpRunControls;
+
+   // fltk standard controls 
    Fl_Output* _outFilename;
    Fl_Button* _btnFileDialog;
    Fl_Browser* _bwrComputation;
@@ -93,37 +84,34 @@ private:
    Fl_Box* _lbSeq3;
    Fl_Box* _lbSeq4;
 
-   /////////  01-04-222 
-   GroupRunControls* _grpRunControls;
+   // combined gui seqiencing and tm status flags 
+   AppStatus _appStat;
 
    // state machine
-   //sm<Cfsm> *_sm;
-
-   // member data
-
-   // flags to set the user control group 
-   bool _validFile; 
-   bool _validInputString;
-   RunControlState _runState;
-   bool _running;
-   bool _paused;
-   bool _complete;
+   Cfsm _cfsm;
+   std::unique_ptr<sml::sm<Cfsm>> _sm;
 
    float _runRate;
    std::string _partialfname;
    std::string _definitionfile;
    TuringMachine *_tm;  // turing machine 
 
-   ipcq::IpcQueueWriter *_ipcqWriter;
+   std::unique_ptr<ipcq::IpcQueueWriter> _ipcqWriter;
    std::unique_ptr<bp::child> _child;
 
-   // control callbacks
+   // fltk widget callbacks
    static void ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param);
    static void ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param);
    static void UserInputStringCB(Fl_Widget *widget, void *param);
    static void MainWindOnCloseCB(Fl_Widget *wind, void *data);
    static void RunTimerCB(void *data);
    static void GroupControlCB(Fl_Widget *widget, void *param);
+
+   // state machine callbacks  
+   void StateMachineCB(const BtnEnables &be);
+   bool GetHistoryCB();
+
+   TmStatus GetTmStatus();
 
    std::string GetDefinitionfile();
    void SetDefinitionfile(const std::string &filename);
@@ -137,7 +125,6 @@ private:
    int TestInputString();
    int SetInputStringInTM();
 
-   void SetControlEnables();
    float GetSequencerRunRate();
    void SetRunStatusBox(TmStatus rs);
 
@@ -147,15 +134,11 @@ private:
    // used in gv file creation
    std::string _gvFullPath;
 
-   RunControlState GetControlState();
-
    void RunButton();
    void PauseButton();
    void StepForward();
    void StepBackward();
    void InitializeTm();
-
-
 
 }; // end class
 

@@ -54,9 +54,7 @@ public:
    GroupRunControls(int x, int y);
    ~GroupRunControls();
 
-   void SetControlEnables(RunControlState state, bool atBeginning);
-   GroupButton GetClickedBtn(){return _clicked; };
-
+   GroupButton GetClickedBtn(){ return _clicked; };
    std::string GetSpeedString() {return _icSpeed->value();} 
 
    void RewindClick(); 

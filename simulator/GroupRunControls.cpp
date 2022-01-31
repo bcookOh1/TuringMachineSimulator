@@ -63,60 +63,6 @@ GroupRunControls::~GroupRunControls(){
    // fltk deletes the widgets 
 } // end dtor 
 
-
-// not ready
-//    all deactive
-// ready
-//    enable forward step
-//    enable run
-// complete
-//    enable rewind
-// running 
-//    enable pause
-// paused
-//    enable single step
-//    enable run
-//    if NOT at beginning
-//        enable back step
-//        enable rewind
-void GroupRunControls::SetControlEnables(RunControlState state, bool atBeginning){
-
-   _btnRewind->deactivate();
-   _btnStepBack->deactivate();
-   _btnPause->deactivate();
-   _btnStepForward->deactivate();
-   _btnRun->deactivate();
-
-   switch(state){
-   case RunControlState::NotReady:
-      break;
-   case RunControlState::Ready:
-      _btnStepForward->activate();
-      _btnRun->activate();
-      if(atBeginning == false){
-         _btnStepBack->activate();
-      } // end if 
-      break;
-   case RunControlState::Complete:
-      _btnRewind->activate();
-      break;
-   case RunControlState::Running:
-      _btnPause->activate();
-      break;
-   case RunControlState::Paused:
-      _btnStepForward->activate();
-      _btnRun->activate();
-      if(atBeginning == false){
-         _btnRewind->activate();
-         _btnStepBack->activate();
-      } // end if 
-      break;
-   } // end switch
-
-   return;
-} // end SetControlEnables
-
-
 void GroupRunControls::DeactivateAll() {
    SetRewindBtnState(false);
    SetStepBackBtnState(false);
@@ -125,7 +71,6 @@ void GroupRunControls::DeactivateAll() {
    SetRunBtnState(false);
    return;
 } // end DeactivateAll
-
 
 void GroupRunControls::RewindClick() {
    _clicked = GroupButton::Rewind;

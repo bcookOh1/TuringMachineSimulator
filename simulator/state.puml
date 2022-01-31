@@ -34,48 +34,29 @@ enum class TmStatus : int {
 @startuml GUI Button Enables
 
 
-[*] --> AtStart
-AtStart --> ValidTM : eSelectTmBtn [validFile] 
-AtStart : on_entry: \nSelectTmBtn active  
-ValidTM --> ValidString : eSetInputBtn [validInputString]
-ValidTM : on_entry: \nSetInputBtn active
-ValidString --> Paused : [TmReady]
-ValidString : on_entry: \nRunBtn active \nStepForwardBtn active
-Paused --> Running : eRunBtn 
-Paused : on_entry: \nRunBtn active \nStepForwardBtn active \nRewindBtn active \nSaveComputationBtn active
+[*] --> SetTm 
+SetTm --> SetString : eSelectTmBtn [validFile]
+SetTm : on_entry: \nSelectTmBtn active  
 
-Paused --> SingleStep : eStepForwardBtn
+SetString : on_entry: \nSetInputBtn active  
+
+SetString --> Paused : eSetInputBtn [validString]
+Paused --> Running : eRunBtn [inProgress] 
+Paused : on_entry: \nRunBtn active \nStepForwardBtn active \nSaveComputationBtn active \nif hasHistory then \n  RewindBtn active \n  StepBackwardBtn active 
+
+Paused --> Paused : eStepForwardBtn \n[inProgress]
+Paused --> Halt : eStepForwardBtn [halt]
+Paused --> Paused : eStepBackwardBtn
 Paused --> Paused : eRewindBtn
 
-SingleStep : on_entry \nTransitionStep()
-SingleStep --> HaltAccept : eStepForwardBtn \n[TmAccept]
-SingleStep --> HaltFailed : eStepForwardBtn \n[TmFailed]
-SingleStep --> Paused : [TmInProgress]
+Running --> Paused : ePauseBtn [inProgress]
+Running --> Running : eLoop [inProgress]
+Running --> Halt : eHalt [halt]
+Running : on_entry: \nPauseBtn active 
 
-Running --> Paused : ePauseBtn [TmInProgress]
-Running --> Running : [TmInProgress]
-Running --> HaltAccept : [TmAccept]
-Running --> HaltFailed : [TmFailed]
-Running : on_entry: \nTransitionStep() \nPauseBtn active \nSaveComputationBtn deactive
-Paused --> ValidTM : eSelectTmBtn [validFile] 
-Paused --> ValidString : eAcceptInputStr [validInputString]
+Halt : on_entry: \nRewind active \nStepbackwardBtn active \nSaveComputationBtn active
 
-HaltAccept : on_entry: \nSaveComputationBtn active \nSelectTmBtn active \nSetInputBtn active
-HaltFailed : on_entry: \nSaveComputationBtn active \nSelectTmBtn active \nSetInputBtn active
-
-HaltAccept --> Paused : eRewindBtn
-HaltFailed --> Paused : eRewindBtn
-HaltAccept --> ValidTM : eSelectTmBtn [validFile] 
-HaltFailed --> ValidTM : eSelectTmBtn [validFile] 
-HaltAccept --> ValidString : eSetInputBtn [validInputString]
-HaltFailed --> ValidString : eSetInputBtn [validInputString]
+Halt --> Paused : eRewindBtn
+Halt --> Paused : eStepBackwardBtn
 
 @enduml
-
-/'
-Paused --> HaltAccept : eStepForwardBtn [AcceptedOnFinalState || \nHaltOnNoTransition || \nHaltOnNonFinalState]
-Paused --> HaltFailed : eStepForwardBtn [InvalidLeftMove || \nInvalidRightMove || \nSomethingWentWrong]
-Running --> HaltAccept : [AcceptedOnFinalState || \nHaltOnNoTransition || \nHaltOnNonFinalState]
-Running --> HaltFailed : [InvalidLeftMove || \nInvalidRightMove || \nSomethingWentWrong]
-
-'/

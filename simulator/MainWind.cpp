@@ -27,20 +27,25 @@ MainWind::MainWind(int w, int h, const char* title) :
    this->callback(MainWindOnCloseCB);
 
    _tm = nullptr;
-   _validFile = false;
-   _validInputString = false;
-   _runState = RunControlState::NotReady;
-   _running = false;
-   _paused = false;
-   _complete = false;
-   _ipcqWriter = new ipcq::IpcQueueWriter(QueueName);
+   _appStat.tm = TmStatus::Uninitialized;
+   _appStat.validTm = false;
+   _appStat.validInput = false;
+   _appStat.complete = false;
 
-   // open the ipcq for writing
+   // declare and open the ipcq for writing
+   _ipcqWriter = std::unique_ptr<ipcq::IpcQueueWriter>(new ipcq::IpcQueueWriter(QueueName));
    int result = _ipcqWriter->Open();
    if(result != 0){
       std::cout << _ipcqWriter->GetErrorStr() << std::endl;
       exit(0);
    } // end if 
+
+   // ball backs for the state machine 
+   _cfsm.SetStateMachineCB(std::bind(&MainWind::StateMachineCB, this, std::placeholders::_1));
+   _cfsm.SetHasHistoryCB(std::bind(&MainWind::GetHistoryCB, this));
+
+   _sm = std::unique_ptr<sml::sm<Cfsm>>(new sml::sm<Cfsm>{_cfsm});
+   _sm->process_event(eInit{});
 
 } // end ctor
 
@@ -50,10 +55,9 @@ MainWind::~MainWind() {
    if(_tm != nullptr) {
       delete _tm;
    } // end if 
-
-   delete _ipcqWriter;
-
+   
    // fltk deletes the widgets
+
 } // end dtor
 
 // event trap callback to ignore the escape key press 
@@ -71,6 +75,38 @@ void MainWind::MainWindOnCloseCB(Fl_Widget *wind, void *data) {
    mainwind->hide();
 
 } // end MainWindOnCloseCB
+
+
+// callback from the state machine to set the control active/deactive states 
+void MainWind::StateMachineCB(const BtnEnables &be){
+
+   std::cout << "T:" << t_f(be.SelectTm) << " I:" << t_f(be.SetInputStr) << " Re:" << t_f(be.Rewind) << " B:" << t_f(be.StepBack) 
+             << " P:" << t_f(be.Pause) << " F:" << t_f(be.StepForward) << " R:" << t_f(be.Run) << " S:" << t_f(be.SaveComputation) << "\n";
+
+   SetBtnState<Fl_Button*>(_btnFileDialog, be.SelectTm);
+   SetBtnState<Fl_Button*>(_btnLoadString, be.SetInputStr);
+   _grpRunControls->SetRewindBtnState(be.Rewind);
+   _grpRunControls->SetStepBackBtnState(be.StepBack);
+   _grpRunControls->SetPauseBtnState(be.Pause);
+   _grpRunControls->SetStepForwardBtnState(be.StepForward);
+   _grpRunControls->SetRunBtnState(be.Run);
+   SetBtnState<Fl_Button*>(_btnSaveComputation, be.SaveComputation);
+
+} // end StateMachineCB
+
+
+// callback from the state machine to return true/false 
+// if_tm history is available 
+bool MainWind::GetHistoryCB(){
+   int size = 0;
+
+   if(_tm != nullptr)
+      size = _tm->GetHistorySize();
+   
+   std::cout << "history callback hit: " << size << "\n"; 
+   
+   return (size > 0);
+} // end GetHistoryCB 
 
 
 // a fuction to do the intial setup on the GUI elements 
@@ -113,7 +149,7 @@ void MainWind::SetupControls(int w, int h) {
    SetRunStatusBox(TmStatus::Uninitialized);
  
    _grpRunControls = new GroupRunControls(25,120);
-   _grpRunControls->SetMainWind(this);
+   _grpRunControls->callback(GroupControlCB,this);
 
    _lbSeq3 = new Fl_Box(315, 115, 15,  15, "3");
    _lbSeq3->labelsize(14);
@@ -138,11 +174,37 @@ void MainWind::SetupControls(int w, int h) {
 
    end(); // fltk call, ends additions to gui tree
 
-   SetControlEnables();
-
    return;
 } // end SetupControls
 
+void MainWind::GroupControlCB(Fl_Widget *widget, void *param){
+
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
+   // call the control button functions
+   GroupButton clicked = mainwind->_grpRunControls->GetClickedBtn();
+   switch(clicked){
+   case GroupButton::Rewind:
+      mainwind->InitializeTm();
+      break;
+   case GroupButton::Run:
+      mainwind->RunButton();
+      break;
+   case GroupButton::Pause:
+      mainwind->PauseButton();
+      break;
+   case GroupButton::StepForward:
+      mainwind->StepForward();
+      break;
+   case GroupButton::StepBack:
+      mainwind->StepBackward();
+      break;
+   default:
+      break;
+   }; // end switch
+
+} // end GroupControlCB
 
 // ShowDefinitionFileDialogCB callback for the _btnFileDialog to use the
 // defintion file name to show a fikle dialog to let the user sselect a *.tm 
@@ -153,26 +215,24 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
    auto mainwind = static_cast<MainWind *>(param);
 
    std::string desktop = GetDesktopPath();
-
-   // hide the status box 
    mainwind->SetRunStatusBox(TmStatus::Uninitialized);
 
    Fl_File_Chooser chooser(desktop.c_str(), "*.tm", 
                            Fl_File_Chooser::SINGLE, "Turing Machine");
    chooser.directory("./tms" /*desktop.c_str()*/);
-
    chooser.show();
 
    // block until user selects a button
    while(chooser.shown()) Fl::wait();
 
-   // if user selected a file clear th internal status an setup the tm 
+   // if user selected a file clear the internal status and 
+   // use factory to make a new tm 
    if(chooser.value() != NULL) {
 
-      mainwind->_validFile = false;
+      mainwind->_appStat.validTm = false;
 
       // clear the input string 
-      mainwind->_validInputString = false;
+      mainwind->_appStat.validInput = false;
       mainwind->_inString->value("");
       mainwind->_inString->color(FL_BACKGROUND2_COLOR);
 
@@ -180,16 +240,14 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
       mainwind->TmFactory();
       mainwind->_grpTuringTape->SetConfiguration(mainwind->_tm->GetConfigurationType());
 
-      mainwind->SetControlEnables();
-
       // use _partialfname for writing the computation file  
       std::string fname(chooser.value(0));
       GetFilenameFromPath(fname);
       mainwind->_partialfname = fname;
 
-      mainwind->_tm->WriteGraphvizDotFile(fname, mainwind->_gvFullPath);
+      WriteGraphvizDotFile(mainwind->_tm, fname, mainwind->_gvFullPath);
 
-      // 01-09-2022, uncomment after completing the new sequencing 
+      // spawn a new gviz.exe process (boost::process child) 
       // if child is closed, open it
       if(mainwind->_child == nullptr) {
          mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
@@ -198,17 +256,54 @@ void MainWind::ShowDefinitionFileDialogCB(Fl_Widget *widget, void *param) {
          // if child was closed, reopen
          if(mainwind->_child->running() == false){
             mainwind->_child = unique_ptr<bp::child>(new bp::child("gviz.exe"));
-         } // end uf 
+         } // end if 
       } // end if 
       
-      // push the new gv file cmd and the full path to the child (ipcq reader)
+      // push the new gv file cmd and the full path to the child through to the ipcq reader in gviz.exe process
       int result = mainwind->_ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::GvFile),mainwind->_gvFullPath);
       assert((result == 0)&&("ShowDefinitionFileDialogCB: ipcq push failed"));
 
    } // end if
 
+   mainwind->_appStat.tm = mainwind->_tm->GetTmStatus();
+   mainwind->_sm->process_event(eSelectTm{mainwind->_appStat});
+
    return;
 } // end ShowDefinitionFileDialogCB
+
+// UserInputStringCB, callback for the _btnLoadString button,
+// this reads _inString, course test, and loads it to the _tm and 
+// then calls SetupGUITape() to set up the GUI
+void MainWind::UserInputStringCB(Fl_Widget *widget, void *param) {
+
+   // use like a 'this' pointer
+   auto mainwind = static_cast<MainWind *>(param);
+
+   if(mainwind->_appStat.validTm == true) {
+      int ret = mainwind->TestInputString();
+      if(ret == 0) {
+         mainwind->_appStat.validInput = true;
+         mainwind->SetInputStringInTM();
+
+         // initialize _tm with the input string 
+         mainwind->_tm->Initialize();
+         mainwind->_grpTuringTape->SetTapeToB();
+         mainwind->SetupGUITape(mainwind->_tm->GetConfigurationType());
+      }
+      else {
+         mainwind->_appStat.validInput = false;
+      } // end if 
+
+   } // end if  
+
+   mainwind->_appStat.tm = mainwind->_tm->GetTmStatus();
+   mainwind->_sm->process_event(eSetInput{mainwind->_appStat});
+
+   mainwind->_ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::NewState), mainwind->_tm->GetStartState());
+
+   return; 
+} // end UserInputString
+
 
 // this is the sequencer for the TM, it calls _tm->TransitionStep()
 // and then looks at the tm status to decide how to continue or stop 
@@ -220,35 +315,40 @@ void MainWind::RunTimerCB(void *data) {
    // read here to change rate on the fly  
    mainwind->_runRate = mainwind->GetSequencerRunRate();
 
-   if(mainwind->_complete == false){
+   if(mainwind->_appStat.complete == false){
+
+      mainwind->_appStat.looping = true; // set before StepForward()
       mainwind->StepForward();
+
       Fl::repeat_timeout(mainwind->_runRate, RunTimerCB, data);
+
    }
    else {
-      Fl::remove_timeout(RunTimerCB, data);
-   } // end if 
 
-   mainwind->SetControlEnables();
+      mainwind->_appStat.looping = true;
+      Fl::remove_timeout(RunTimerCB, data);
+      
+   } // end if 
 
    return;
 } // end RunTimerCB
 
 
-
 // RunButton called from the GroupRunControl, this makes sure everything is 
 // setup and then it starts the sequncer timer 
 void MainWind::RunButton() {
+   
+   _appStat.tm = _tm->GetTmStatus();
+   SetRunStatusBox(_appStat.tm);
+   _outStatus->value(RunStateText[static_cast<int>(_appStat.tm)].c_str());
+
+   // set status and start the timer 
+   Fl::add_timeout(_runRate, RunTimerCB, this);
 
    // get the run rate from the dropbox 
    _runRate = GetSequencerRunRate();
-   
-   // set status and start the timer 
-   _running = true;
-   _paused = false;
-   SetRunStatusBox(TmStatus::InProgress);
-   _outStatus->value(RunStateText[static_cast<int>(TmStatus::InProgress)].c_str());
 
-   Fl::add_timeout(_runRate, RunTimerCB, this);
+   _sm->process_event(eLoop{_appStat});
 
    return;
 } // end RunButton
@@ -256,29 +356,25 @@ void MainWind::RunButton() {
 
 void MainWind::PauseButton() {
 
-   _running = false;
-   _paused = true;
-   SetRunStatusBox(TmStatus::InProgress);
-   _outStatus->value(RunStateText[static_cast<int>(TmStatus::InProgress)].c_str());
    Fl::remove_timeout(RunTimerCB, this);
 
-   SetControlEnables();
+   _appStat.tm = _tm->GetTmStatus();
+   SetRunStatusBox(_appStat.tm);
+   _outStatus->value(RunStateText[static_cast<int>(_appStat.tm)].c_str());
+
+   _sm->process_event(ePause{_appStat});
 
    return;
 } // end PauseButton
 
 
 void MainWind::StepForward(){
-   TmStatus status = TmStatus::InProgress;
+
    Transition transition;
    std::string computation;
 
    transition = _tm->GetCurrentTransition();
-   std::cout << "before: " << transition.toStr() << ", ";
-   _tm->PrintHeadPosition();
-
-   _running = false;
-   _complete = false;
+   _appStat.complete = false;
 
    // return 0 success
    // return -1 something went wrong
@@ -290,21 +386,17 @@ void MainWind::StepForward(){
    // TmStatus::Abnormal_Termination, two - way left on #
    // TmStatus::SomethingWentWrong, should not happen, but ?
    int ret = _tm->TransitionStep();
-   status = _tm->GetTmStatus();
+   _appStat.tm = _tm->GetTmStatus();
    if(0 == ret){
 
       transition = _tm->GetCurrentTransition();
-      // std::cout << "after: " << transition.toStr()  << ", ";
-      // _tm->PrintHeadPosition();
 
-      switch(status) {
+      switch(_appStat.tm) {
       case TmStatus::InProgress:
-
-         _running = true;
    
-         // update the browser list 
-         computation = _tm->GetComputation();
-         _bwrComputation->add(computation.c_str());
+         if(_appStat.looping != true){
+            _sm->process_event(eStepForward{_appStat});
+         } // end if 
 
          break;
       case TmStatus::HaltOnNoTransition:
@@ -313,37 +405,40 @@ void MainWind::StepForward(){
       case TmStatus::InvalidLeftMove:
       case TmStatus::InvalidRightMove:
 
-         _complete = true;
+         _appStat.looping = false;
+         _appStat.complete = true;
+         _sm->process_event(eHalt{_appStat});
 
          break;
+      case TmStatus::SomethingWentWrong:  // should not happen 
 
-      // should not happen 
-      default: 
-         _complete = true;
+         _appStat.looping = false;
+         _appStat.complete = true;
+         _sm->process_event(eHalt{_appStat});
+
+         break;
+      case TmStatus::Uninitialized:
+         // do nothing 
+         break;
+      case TmStatus::Ready:
+         // do nothing 
          break;
       } // end switch 
 
-      SetTapeSymbolAndMoveTheHead(transition);
-   
-      // write result to GUI
-      // _bwrComputation->add(RunStateText[static_cast<std::size_t>(status)].c_str());
-      SetStatus(status);
-
-   }
-   else {
-      SetStatus(TmStatus::SomethingWentWrong);
    } // end if 
 
-   SetControlEnables();
+   SetTapeSymbolAndMoveTheHead(transition); 
+
+   // update the computation text and status 
+   computation = _tm->GetComputation();
+   _bwrComputation->add(computation.c_str());
+   SetStatus(_appStat.tm);
 
    return;
 } // end StepForward
 
 
 void MainWind::StepBackward(){
-
-   _running = false;
-   _paused = true;
 
    Transition transition;
    int result = _tm->StepBack(transition);
@@ -354,7 +449,8 @@ void MainWind::StepBackward(){
    std::string computation = _tm->GetComputation();
    _bwrComputation->add(computation.c_str());
 
-   SetControlEnables();
+   _appStat.tm = _tm->GetTmStatus();
+   _sm->process_event(eStepBackward{_appStat});
 
    return;
 } // end StepBackward
@@ -363,19 +459,19 @@ void MainWind::StepBackward(){
 void MainWind::InitializeTm(){
 
    // if the TM is not ready like after a run then initialize
-   if(_tm->GetTmStatus() != TmStatus::Ready) {
+   _appStat.tm = _tm->GetTmStatus();
+   if(_appStat.tm != TmStatus::Ready) {
       _tm->Initialize();
       _grpTuringTape->SetTapeToB();
       SetupGUITape(_tm->GetConfigurationType());
       _bwrComputation->clear();
 
-      _running = false;
-      _complete = false;
-      _paused = true;
+      _appStat.complete = false;
+      _appStat.looping = false;
       
    } // end if
 
-   SetControlEnables();
+   _sm->process_event(ePause{_appStat});
 
    return;
 } // end InitializeTm
@@ -415,37 +511,6 @@ void MainWind::ShowSaveComputationFileDialogCB(Fl_Widget *widget, void *param) {
 
    return;
 } // end ShowSaveComputationFileDialogCB
-
-
-// UserInputStringCB, callback for the _btnLoadString button,
-// this reads _inString, course test, and loads it to the _tm and 
-// then calls SetupGUITape() to set up the GUI
-void MainWind::UserInputStringCB(Fl_Widget *widget, void *param) {
-
-   // use like a 'this' pointer
-   auto mainwind = static_cast<MainWind *>(param);
-
-   if(mainwind->_validFile == true) {
-      int ret = mainwind->TestInputString();
-      if(ret == 0) {
-         mainwind->_validInputString = true;
-         mainwind->SetInputStringInTM();
-
-         // initialize _tm with the input string 
-         mainwind->_tm->Initialize();
-         mainwind->_grpTuringTape->SetTapeToB();
-         mainwind->SetupGUITape(mainwind->_tm->GetConfigurationType());
-      }
-      else {
-         mainwind->_validInputString = false;
-      } // end if 
-
-      mainwind->SetControlEnables();
-
-   } // end if  
-
-   return; 
-} // end UserInputString
 
 
 // return 0 match
@@ -510,7 +575,6 @@ int MainWind::SetTapeSymbolAndMoveTheHead(Transition transition) {
 
    _grpTuringTape->SetHeadState(transition.GetState());
 
-   // 12-23-2021 send to show_diagram
    _ipcqWriter->Push(static_cast<unsigned int>(IpcqCmd::NewState),transition.GetState());
 
    return ret;
@@ -527,74 +591,6 @@ void MainWind::SetDefinitionfile(const std::string &filename) {
 
    return;
 } // SetDefinitionfile
-
-
-// SetControlEnables, set the active/deactive state on 
-// the gui controls to help the user operate the program
-void MainWind::SetControlEnables() {
-
-   _btnFileDialog->deactivate();
-   _inString->deactivate();
-   _btnLoadString->deactivate();
-   _lbExample->deactivate();
-
-   if(_validFile == true) {
-      _inString->activate();
-      _btnLoadString->activate();
-      _lbExample->activate();
-   } // end if 
-   
-   if(_running == true) {
-      _btnFileDialog->deactivate();
-      _inString->deactivate();
-      _btnLoadString->deactivate();
-      _lbExample->deactivate();
-   }
-   else {
-      _btnFileDialog->activate();
-   } // end if 
-
-   if(_bwrComputation->size() > 0 && _running == false) {
-      _btnSaveComputation->activate();
-   }
-   else {
-      _btnSaveComputation->deactivate();
-   } // end if 
-
-   bool atBeginning = _tm->GetHistorySize() == 0 ? true : false; 
-   _grpRunControls->SetControlEnables(GetControlState(), atBeginning);
-   
-   return;
-} // end SetControlEnables
-
-
-RunControlState MainWind::GetControlState(){
-   RunControlState ret = RunControlState::NotReady;
-
-   if(_validFile == true && _validInputString == true){
-      if(_running == false){
-         if(_complete == false){
-            ret = RunControlState::Ready;
-         }
-         else {
-            ret = RunControlState::Complete;
-         } // end if 
-      }
-      else {
-         if(_complete == false){
-            ret = RunControlState::Running;
-         }
-         else {
-            ret = RunControlState::Complete;
-         } // end if 
-      } // end if 
-   } // end if 
-
-   // std::cout << std::boolalpha << _validFile << ", " << _validInputString << ", " << _running << ", " << _complete << "\n";
-
-   return ret;
-} // end GetControlState
-
 
 
 // GetSequencerRunRate, return the seconds float value for the 
@@ -621,7 +617,7 @@ float MainWind::GetSequencerRunRate() {
 // is not created and the errors are shown in the status text box 
 void MainWind::TmFactory() {
 
-   _validFile = false;
+   _appStat.validTm = false;
 
    // delete the old _tm if it exists  
    if(_tm != nullptr){
@@ -641,7 +637,7 @@ void MainWind::TmFactory() {
       _lbExample->copy_label(label.c_str());
       _lbExample->show();
 
-      _validFile = true;
+      _appStat.validTm = true;
       _outStatus->value("valid definition file loaded");
 
       _inString->value(_tm->GetInputExample().c_str());
@@ -777,6 +773,13 @@ int MainWind::SetupGUITape(TmConfiguration configuration) {
 
    return ret;
 } // end SetupGUITape
+
+// placed here since _tm header is here in .cpp and  
+// only a forward in MainWind.h
+TmStatus MainWind::GetTmStatus(){
+   return _tm->GetTmStatus();
+} // end GetTmStatus
+
 
 
 

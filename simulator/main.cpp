@@ -10,7 +10,7 @@
 #include "MainWind.h"
 
 
-// the main, intantiate a MainWind, show and run it
+// the main, instantiate a MainWind, show and run it
 int main(int argc, char **argv) {
    MainWind mainWind(578, 620, "Turing Machine Simulator"); // add 50 to height // old 570
    mainWind.show();

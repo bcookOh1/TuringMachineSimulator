@@ -4,8 +4,9 @@ BIN := ./bin
 
 # compiler for c++
 CXX := D:/msys64/mingw64/bin/g++.exe
-CPPFLAGS := -Wall -std=c++20 -c -MMD -MP -ID:/sw_libs/c++/fltk-1.4_mingw64 -ID:/sw_libs/c++/boost_1_78_0 \
--ID:/sw_libs/c++/ipcq/include
+CPPFLAGS := -Wall -std=c++20 -c -MMD -MP \
+-ID:/sw_libs/c++/fltk-1.4_mingw64 -ID:/sw_libs/c++/boost_1_78_0 \
+-ID:/sw_libs/c++/ipcq/include -ID:/sw_libs/c++/boost_ext
 
 src := $(wildcard *.cpp)
 obj := $(src:%.cpp=$(BIN)/%.o)

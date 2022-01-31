@@ -200,7 +200,7 @@ int MainWind::ConvertGvAndLoadImages(){
    string tmName = (fp.has_stem() ? fp.stem().string() : _gvFile);
    _title = tmName;
 
-   cout << tmName << ": load images duration: " << duration.count() << " ms" << endl;
+   // cout << tmName << ": load images duration: " << duration.count() << " ms" << endl;
 
    return ret;
 } // end ConvertGvAndLoadImgs
@@ -217,9 +217,9 @@ int MainWind::ShowImageForState(const string &state){
       // assumed that all images in this "tm" are the same size
       if(state == AllOffTm){
 
-         cout << "1) w:(" << this->w() << "," << this->h() << ") " << 
-                    "b:(" << _box->w() << "," << _box->h() << ") " << 
-                  "png:(" << _img->w() << "," << _img->h() << ")\n";
+         // cout << "1) w:(" << this->w() << "," << this->h() << ") " << 
+         //            "b:(" << _box->w() << "," << _box->h() << ") " << 
+         //          "png:(" << _img->w() << "," << _img->h() << ")\n";
 
          ResizeMainWindAndBox();
       } // endif 
@@ -229,13 +229,13 @@ int MainWind::ShowImageForState(const string &state){
       _box->image(_img);
       redraw();
 
-      if(state == AllOffTm){
+      // if(state == AllOffTm){
 
-         cout << "2) w:(" << this->w() << "," << this->h() << ") " << 
-                    "b:(" << _box->w() << "," << _box->h() << ") " << 
-                  "png:(" << _img->w() << "," << _img->h() << ")\n";
+      //    cout << "2) w:(" << this->w() << "," << this->h() << ") " << 
+      //               "b:(" << _box->w() << "," << _box->h() << ") " << 
+      //             "png:(" << _img->w() << "," << _img->h() << ")\n";
 
-      } // endif 
+      // } // endif 
 
    }
    else {
