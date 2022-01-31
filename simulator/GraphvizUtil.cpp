@@ -1,11 +1,14 @@
 
 #include "GraphvizUtil.h"
-#include "MainWind.h"
-
+#include "TuringMachine.h"
 
 
 // bcook 12-08-2021
-int WriteGraphvizDotFile(TuringMachine *tm, std::string tmFilename, std::string &gvFullPath) {
+int WriteGraphvizDotFile(TuringMachine *tm, string tmFilename, string &gvFullPath) {
+   
+   using std::begin;
+   using std::end;
+
    int ret = 0;
 
    std::set<string> stateList;

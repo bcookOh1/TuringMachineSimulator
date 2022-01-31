@@ -1,7 +1,6 @@
 
 #pragma once
 
-
 #include <filesystem>
 #include <sstream>
 #include <fstream>
@@ -9,10 +8,11 @@
 #include <iomanip>
 #include <map>
 
+
 using namespace std;
 namespace fs = std::filesystem;
-using std::begin;
-using std::end;
 
-// friend function to 
-int WriteGraphvizDotFile(TuringMachine *tm, std::string tmFilename, std::string &gvFullPath);
+class TuringMachine;
+
+// friend function to TuringMachine class
+int WriteGraphvizDotFile(TuringMachine *tm, string tmFilename, string &gvFullPath);
