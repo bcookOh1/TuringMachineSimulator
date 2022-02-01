@@ -466,6 +466,8 @@ void MainWind::InitializeTm(){
       SetupGUITape(_tm->GetConfigurationType());
       _bwrComputation->clear();
 
+      AddDefinitionToBrowser();
+      
       _appStat.complete = false;
       _appStat.looping = false;
       
@@ -642,11 +644,7 @@ void MainWind::TmFactory() {
 
       _inString->value(_tm->GetInputExample().c_str());
 
-      // add the definition to the computation browser
-      StringVector definition = _tm->GetDefinition();
-      std::for_each(definition.begin(), definition.end(), [&](std::string s) {
-                    _bwrComputation->add(s.c_str());
-      }); // end of lambda 
+      AddDefinitionToBrowser();
 
    }
    else {
@@ -655,6 +653,18 @@ void MainWind::TmFactory() {
    
    return; 
 } // end TmFactory
+
+
+void MainWind::AddDefinitionToBrowser(){
+
+   // add the definition to the computation browser
+   StringVector definition = _tm->GetDefinition();
+   std::for_each(definition.begin(), definition.end(), [&](std::string s) {
+                  _bwrComputation->add(s.c_str());
+   }); // end of lambda 
+
+} // end AddDefinitionToBrowser
+
 
 
 // WriteComputationToFile, called from the 

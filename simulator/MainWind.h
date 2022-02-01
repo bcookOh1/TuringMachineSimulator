@@ -130,6 +130,7 @@ private:
 
    int SetupGUITape(TmConfiguration configuration);
    void SetStatus(TmStatus rs);
+   void AddDefinitionToBrowser();
 
    // used in gv file creation
    std::string _gvFullPath;
